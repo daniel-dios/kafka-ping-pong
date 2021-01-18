@@ -84,6 +84,19 @@ class ProcessorTest {
     verify(imageProcessor, never()).compute(any());
   }
 
+  @Test
+  void shouldProcessErrorAndStoreWhenEmptyFromRepo() {
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(Optional.empty());
+
+    processor.process(new ProcessRequest(TRANSACTION_ID, true));
+
+    verify(processedRepository).find(TRANSACTION_ID);
+    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, true)));
+    verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, "pong", true));
+    verify(pongRepository, never()).pong(any());
+    verify(imageProcessor, never()).compute(any());
+  }
+
   private ArgumentMatcher<Message> getMessageMatcher(UUID transactionId, boolean expectedError) {
     return s -> (s.isError() == expectedError && s.getTransactionId().equals(transactionId));
   }
