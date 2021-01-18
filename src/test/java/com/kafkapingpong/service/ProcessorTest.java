@@ -24,12 +24,14 @@ import static org.mockito.Mockito.when;
 class ProcessorTest {
 
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
+  private static final List<Message> EMPTY_LIST = List.of();
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(
       new Message(TRANSACTION_ID, true),
       new Message(TRANSACTION_ID, true),
       new Message(TRANSACTION_ID, true)
   );
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
+  private static final String PONG = "pong";
 
   private ProcessedRepository processedRepository;
   private ImageProcessor imageProcessor;
@@ -48,7 +50,7 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndComputeImageOnSuccessInput() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of());
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(EMPTY_LIST);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, false));
@@ -57,7 +59,7 @@ class ProcessorTest {
     verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, false)));
     verify(imageProcessor).compute(TRANSACTION_ID);
     verify(pongRepository).pong(argThat(
-        s -> s.getPong().equals("pong")
+        s -> s.getPong().equals(PONG)
             && s.getTransactionId().equals(TRANSACTION_ID)
             && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
@@ -73,7 +75,7 @@ class ProcessorTest {
     verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, false)));
     verify(imageProcessor).compute(TRANSACTION_ID);
     verify(pongRepository).pong(argThat(
-        s -> s.getPong().equals("pong")
+        s -> s.getPong().equals(PONG)
             && s.getTransactionId().equals(TRANSACTION_ID)
             && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
@@ -86,7 +88,7 @@ class ProcessorTest {
 
     verify(processedRepository).find(TRANSACTION_ID);
     verify(pongRepository).pong(argThat(
-        s -> s.getPong().equals("pong")
+        s -> s.getPong().equals(PONG)
             && s.getTransactionId().equals(TRANSACTION_ID)));
     verify(processedRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
@@ -94,14 +96,27 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageWhenErrorAndNotCompute() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of());
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(EMPTY_LIST);
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
     verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, true)));
-    verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, "pong", true));
+    verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, PONG, true));
+    verify(pongRepository, never()).pong(any());
+    verify(imageProcessor, never()).compute(any());
+  }
+
+  @Test
+  void shouldSendErrorMessageBeforeReAttempts() {
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
+
+    processor.process(new ProcessRequest(TRANSACTION_ID, true));
+
+    verify(processedRepository).find(TRANSACTION_ID);
+    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, true)));
+    verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, PONG, true));
     verify(pongRepository, never()).pong(any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -116,19 +131,6 @@ class ProcessorTest {
     verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository, never()).store(any());
     verify(errorRepository, never()).pongForError(any());
-    verify(pongRepository, never()).pong(any());
-    verify(imageProcessor, never()).compute(any());
-  }
-
-  @Test
-  void shouldSendErrorMessageBeforeReAttempts() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
-
-    processor.process(new ProcessRequest(TRANSACTION_ID, true));
-
-    verify(processedRepository).find(TRANSACTION_ID);
-    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, true)));
-    verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, "pong", true));
     verify(pongRepository, never()).pong(any());
     verify(imageProcessor, never()).compute(any());
   }
