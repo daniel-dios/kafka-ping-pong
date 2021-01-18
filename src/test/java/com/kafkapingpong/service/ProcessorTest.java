@@ -1,8 +1,10 @@
 package com.kafkapingpong.service;
 
+import com.kafkapingpong.event.Message;
 import com.kafkapingpong.repository.ProcessedRepository;
 import com.kafkapingpong.service.dto.ProcessRequest;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -27,8 +29,11 @@ class ProcessorTest {
     processor.process(new ProcessRequest(TRANSACTION_TYPE, false));
 
     verify(processedRepository).find(TRANSACTION_TYPE);
-
-    verify(processedRepository).store(argThat(s -> (!s.isError() && s.getTransactionType().equals(TRANSACTION_TYPE))));
+    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_TYPE, false)));
     verify(imageProcessor).compute(TRANSACTION_TYPE);
+  }
+
+  private ArgumentMatcher<Message> getMessageMatcher(UUID transactionType, boolean expectedError) {
+    return s -> (s.isError() == expectedError && s.getTransactionType().equals(transactionType));
   }
 }
