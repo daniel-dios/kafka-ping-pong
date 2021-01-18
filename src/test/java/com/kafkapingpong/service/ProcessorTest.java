@@ -35,11 +35,13 @@ class ProcessorTest {
 
     verify(processedRepository).find(TRANSACTION_TYPE);
     verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_TYPE, false)));
-    verify(pongRepository).pong(argThat(
-        s -> s.getPong().equals("pong")
-            && s.getTransactionType().equals(TRANSACTION_TYPE)
-            && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) > 0
-    ));
+    verify(pongRepository).pong(argThat(getPongMatcher(DURATION_FOR_COMPUTE_IMAGE)));
+  }
+
+  private ArgumentMatcher<PongMessage> getPongMatcher(Duration durationForComputeImage) {
+    return s -> s.getPong().equals("pong")
+        && s.getTransactionType().equals(TRANSACTION_TYPE)
+        && s.getOfMillis().compareTo(durationForComputeImage) > 0;
   }
 
   private ArgumentMatcher<Message> getMessageMatcher(UUID transactionType, boolean expectedError) {

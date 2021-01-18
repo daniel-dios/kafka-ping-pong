@@ -31,8 +31,8 @@ public class Processor {
     final var compute = imageProcessor.compute(processRequest.getTransactionType());
 
     final var timeConsumed = Instant.now().minusMillis(beginning.toEpochMilli());
-    final var total = compute.plusMillis(timeConsumed.toEpochMilli());
+    final var totalElapsed = compute.plusMillis(timeConsumed.toEpochMilli());
 
-    successRepository.pong(new PongMessage(processRequest.getTransactionType(), "pong", total));
+    successRepository.pong(new PongMessage(processRequest.getTransactionType(), "pong", totalElapsed));
   }
 }
