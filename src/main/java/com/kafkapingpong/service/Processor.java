@@ -1,7 +1,9 @@
 package com.kafkapingpong.service;
 
+import com.kafkapingpong.event.ErrorPongMessage;
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.PongMessage;
+import com.kafkapingpong.repository.ErrorRepository;
 import com.kafkapingpong.repository.ProcessedRepository;
 import com.kafkapingpong.repository.SuccessRepository;
 import com.kafkapingpong.service.dto.ProcessRequest;
@@ -14,15 +16,18 @@ public class Processor {
   private final ProcessedRepository processedRepository;
   private final ImageProcessor imageProcessor;
   private final SuccessRepository successRepository;
+  private final ErrorRepository errorRepository;
 
   public Processor(
       ProcessedRepository processedRepository,
       ImageProcessor imageProcessor,
-      SuccessRepository successRepository) {
+      SuccessRepository successRepository,
+      ErrorRepository errorRepository) {
 
     this.processedRepository = processedRepository;
     this.imageProcessor = imageProcessor;
     this.successRepository = successRepository;
+    this.errorRepository = errorRepository;
   }
 
   public void process(ProcessRequest processRequest) {
@@ -30,6 +35,12 @@ public class Processor {
     final var transactionId = processRequest.getTransactionId();
     final var message = processedRepository.find(transactionId);
     final Duration duration;
+
+    if (processRequest.isError()) {
+      persist(processRequest);
+      errorRepository.pongForError(new ErrorPongMessage(transactionId, "pong", true));
+      return;
+    }
 
     if (message.isEmpty()) {
       persist(processRequest);
