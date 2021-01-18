@@ -6,6 +6,7 @@ import com.kafkapingpong.repository.ProcessedRepository;
 import com.kafkapingpong.repository.SuccessRepository;
 import com.kafkapingpong.service.dto.ProcessRequest;
 
+import java.time.Duration;
 import java.time.Instant;
 
 public class Processor {
@@ -26,14 +27,19 @@ public class Processor {
 
   public void process(ProcessRequest processRequest) {
     final var beginning = Instant.now();
-    processedRepository.find(processRequest.getTransactionType());
+    final var message = processedRepository.find(processRequest.getTransactionType());
 
-    processedRepository.store(new Message(processRequest.getTransactionType(), processRequest.isError()));
-    final var compute = imageProcessor.compute(processRequest.getTransactionType());
+    if (message.isEmpty()) {
+      processedRepository.store(new Message(processRequest.getTransactionType(), processRequest.isError()));
+      final var compute = imageProcessor.compute(processRequest.getTransactionType());
+      final var timeConsumed = Instant.now().minusMillis(beginning.toEpochMilli());
+      final var totalElapsed = compute.plusMillis(timeConsumed.toEpochMilli());
 
-    final var timeConsumed = Instant.now().minusMillis(beginning.toEpochMilli());
-    final var totalElapsed = compute.plusMillis(timeConsumed.toEpochMilli());
-
-    successRepository.pong(new PongMessage(processRequest.getTransactionType(), "pong", totalElapsed));
+      successRepository.pong(new PongMessage(processRequest.getTransactionType(), "pong", totalElapsed));
+    } else {
+      final var totalElapsed = Duration.ofMillis(Instant.now().minusMillis(beginning.toEpochMilli()).toEpochMilli());
+      successRepository.pong(
+          new PongMessage(processRequest.getTransactionType(), "pong", totalElapsed));
+    }
   }
 }
