@@ -17,17 +17,20 @@ public class Processor {
   private final ImageProcessor imageProcessor;
   private final SuccessRepository successRepository;
   private final ErrorRepository errorRepository;
+  private final int attempts;
 
   public Processor(
       ProcessedRepository processedRepository,
       ImageProcessor imageProcessor,
       SuccessRepository successRepository,
-      ErrorRepository errorRepository) {
+      ErrorRepository errorRepository,
+      int attempts) {
 
     this.processedRepository = processedRepository;
     this.imageProcessor = imageProcessor;
     this.successRepository = successRepository;
     this.errorRepository = errorRepository;
+    this.attempts = attempts;
   }
 
   public void process(ProcessRequest processRequest) {
@@ -37,6 +40,9 @@ public class Processor {
     final Duration duration;
 
     if (processRequest.isError()) {
+      if (message.stream().filter(Message::isError).count() >= attempts) {
+        return;
+      }
       persist(processRequest);
       errorRepository.pongForError(new ErrorPongMessage(transactionId, "pong", true));
       return;

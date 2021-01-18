@@ -38,7 +38,7 @@ class ProcessorTest {
     imageProcessor = mock(ImageProcessor.class);
     pongRepository = mock(SuccessRepository.class);
     errorRepository = mock(ErrorRepository.class);
-    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository);
+    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 10);
   }
 
   @Test
@@ -85,8 +85,35 @@ class ProcessorTest {
   }
 
   @Test
-  void shouldProcessErrorAndStoreWhenEmptyFromRepo() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of());
+  void shouldNotSendErrorMessageAfterReAttempts() {
+    final var messages = List.of(
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true)
+    );
+
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(messages);
+    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 3);
+
+    processor.process(new ProcessRequest(TRANSACTION_ID, true));
+
+    verify(processedRepository).find(TRANSACTION_ID);
+    verify(processedRepository, never()).store(any());
+    verify(errorRepository, never()).pongForError(any());
+    verify(pongRepository, never()).pong(any());
+    verify(imageProcessor, never()).compute(any());
+  }
+
+  @Test
+  void shouldSendErrorMessageBeforeReAttempts() {
+    final var messages = List.of(
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true)
+    );
+
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(messages);
+    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 4);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
@@ -96,6 +123,7 @@ class ProcessorTest {
     verify(pongRepository, never()).pong(any());
     verify(imageProcessor, never()).compute(any());
   }
+
 
   private ArgumentMatcher<Message> getMessageMatcher(UUID transactionId, boolean expectedError) {
     return s -> (s.isError() == expectedError && s.getTransactionId().equals(transactionId));
