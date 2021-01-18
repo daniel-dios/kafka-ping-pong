@@ -24,6 +24,11 @@ import static org.mockito.Mockito.when;
 class ProcessorTest {
 
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
+  private static final List<Message> LIST_OF_THREE_ERRORS = List.of(
+      new Message(TRANSACTION_ID, true),
+      new Message(TRANSACTION_ID, true),
+      new Message(TRANSACTION_ID, true)
+  );
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
 
   private ProcessedRepository processedRepository;
@@ -59,9 +64,7 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndComputeImageOnSuccessInputWhenPreviousErrors() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true)));
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, false));
@@ -91,6 +94,7 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageWhenErrorAndNotCompute() {
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of());
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
@@ -104,13 +108,7 @@ class ProcessorTest {
 
   @Test
   void shouldNotSendErrorMessageAfterReAttempts() {
-    final var messages = List.of(
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true)
-    );
-
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(messages);
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
     processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 3);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
@@ -124,14 +122,7 @@ class ProcessorTest {
 
   @Test
   void shouldSendErrorMessageBeforeReAttempts() {
-    final var messages = List.of(
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true)
-    );
-
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(messages);
-    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 4);
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
