@@ -10,7 +10,7 @@ plugins {
 
 abstract class Versions : Plugin<Gradle> {
     companion object {
-        const val springVersion = "2.4.1"
+        const val springVersion = "2.4.2"
     }
 }
 
