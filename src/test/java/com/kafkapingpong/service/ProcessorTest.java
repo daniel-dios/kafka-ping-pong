@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 
 import java.time.Duration;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -43,7 +43,7 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndComputeImageOnSuccessInput() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(Optional.empty());
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of());
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, false));
@@ -54,12 +54,12 @@ class ProcessorTest {
     verify(pongRepository).pong(argThat(
         s -> s.getPong().equals("pong")
             && s.getTransactionId().equals(TRANSACTION_ID)
-            && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) > 0));
+            && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   @Test
   void shouldProcessMessageAndNotComputeImageOnSuccessInput() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(Optional.of(new Message(TRANSACTION_ID, false)));
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
 
     processor.process(new ProcessRequest(TRANSACTION_ID, false));
 
@@ -73,7 +73,7 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageWhenErrorAndNotCompute() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(Optional.of(new Message(TRANSACTION_ID, false)));
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
@@ -86,7 +86,7 @@ class ProcessorTest {
 
   @Test
   void shouldProcessErrorAndStoreWhenEmptyFromRepo() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(Optional.empty());
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of());
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 

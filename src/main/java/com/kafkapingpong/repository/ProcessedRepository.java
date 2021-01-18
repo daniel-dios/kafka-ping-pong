@@ -3,11 +3,11 @@ package com.kafkapingpong.repository;
 
 import com.kafkapingpong.event.Message;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 public class ProcessedRepository {
-  public Optional<Message> find(UUID transactionId) {
+  public List<Message> find(UUID transactionId) {
     throw new UnsupportedOperationException();
   }
 
