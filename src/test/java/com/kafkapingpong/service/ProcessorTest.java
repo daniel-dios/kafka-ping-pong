@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 class ProcessorTest {
 
-  private static final UUID TRANSACTION_TYPE = java.util.UUID.randomUUID();
+  private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
 
   private final ProcessedRepository processedRepository = mock(ProcessedRepository.class);
@@ -30,35 +30,35 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndComputeImageOnSuccessInput() {
-    when(processedRepository.find(TRANSACTION_TYPE)).thenReturn(Optional.empty());
-    when(imageProcessor.compute(TRANSACTION_TYPE)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(Optional.empty());
+    when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
-    processor.process(new ProcessRequest(TRANSACTION_TYPE, false));
+    processor.process(new ProcessRequest(TRANSACTION_ID, false));
 
-    verify(processedRepository).find(TRANSACTION_TYPE);
-    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_TYPE, false)));
+    verify(processedRepository).find(TRANSACTION_ID);
+    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, false)));
     verify(pongRepository).pong(argThat(
         s -> s.getPong().equals("pong")
-            && s.getTransactionType().equals(TRANSACTION_TYPE)
+            && s.getTransactionId().equals(TRANSACTION_ID)
             && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) > 0));
   }
 
   @Test
-  void shouldProcessMessageAndNotComputeImageOnSucessInput() {
-    when(processedRepository.find(TRANSACTION_TYPE)).thenReturn(Optional.of(new Message(TRANSACTION_TYPE, false)));
+  void shouldProcessMessageAndNotComputeImageOnSuccessInput() {
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(Optional.of(new Message(TRANSACTION_ID, false)));
 
-    processor.process(new ProcessRequest(TRANSACTION_TYPE, false));
+    processor.process(new ProcessRequest(TRANSACTION_ID, false));
 
-    verify(processedRepository).find(TRANSACTION_TYPE);
+    verify(processedRepository).find(TRANSACTION_ID);
     verify(pongRepository).pong(argThat(
         s -> s.getPong().equals("pong")
-            && s.getTransactionType().equals(TRANSACTION_TYPE)
+            && s.getTransactionId().equals(TRANSACTION_ID)
             && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) < 1));
     verify(processedRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
   }
 
-  private ArgumentMatcher<Message> getMessageMatcher(UUID transactionType, boolean expectedError) {
-    return s -> (s.isError() == expectedError && s.getTransactionType().equals(transactionType));
+  private ArgumentMatcher<Message> getMessageMatcher(UUID transactionId, boolean expectedError) {
+    return s -> (s.isError() == expectedError && s.getTransactionId().equals(transactionId));
   }
 }

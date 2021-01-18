@@ -27,22 +27,23 @@ public class Processor {
 
   public void process(ProcessRequest processRequest) {
     final var beginning = Instant.now();
-    final var message = processedRepository.find(processRequest.getTransactionType());
+    final var transactionId = processRequest.getTransactionId();
+    final var message = processedRepository.find(transactionId);
     final Duration duration;
 
-    if (message.isPresent()) {
-      duration = Duration.ofMinutes(0);
-    } else {
+    if (message.isEmpty()) {
       persist(processRequest);
-      duration = imageProcessor.compute(processRequest.getTransactionType());
+      duration = imageProcessor.compute(transactionId);
+    } else {
+      duration = Duration.ofMinutes(0);
     }
 
-    successRepository
-        .pong(new PongMessage(processRequest.getTransactionType(), "pong", getDuration(beginning, duration)));
+    final var pongMessage = new PongMessage(transactionId, "pong", getDuration(beginning, duration));
+    successRepository.pong(pongMessage);
   }
 
   private void persist(ProcessRequest processRequest) {
-    processedRepository.store(new Message(processRequest.getTransactionType(), processRequest.isError()));
+    processedRepository.store(new Message(processRequest.getTransactionId(), processRequest.isError()));
   }
 
   private Duration getDuration(Instant beginning, Duration duration) {

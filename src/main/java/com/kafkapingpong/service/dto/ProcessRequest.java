@@ -3,16 +3,16 @@ package com.kafkapingpong.service.dto;
 import java.util.UUID;
 
 public class ProcessRequest {
-  private final UUID transactionType;
+  private final UUID transactionId;
   private final boolean error;
 
-  public ProcessRequest(UUID transactionType, boolean error) {
-    this.transactionType = transactionType;
+  public ProcessRequest(UUID transactionId, boolean error) {
+    this.transactionId = transactionId;
     this.error = error;
   }
 
-  public UUID getTransactionType() {
-    return transactionType;
+  public UUID getTransactionId() {
+    return transactionId;
   }
 
   public boolean isError() {
@@ -33,12 +33,12 @@ public class ProcessRequest {
     if (error != that.error) {
       return false;
     }
-    return transactionType.equals(that.transactionType);
+    return transactionId.equals(that.transactionId);
   }
 
   @Override
   public int hashCode() {
-    int result = transactionType.hashCode();
+    int result = transactionId.hashCode();
     result = 31 * result + (error ? 1 : 0);
     return result;
   }

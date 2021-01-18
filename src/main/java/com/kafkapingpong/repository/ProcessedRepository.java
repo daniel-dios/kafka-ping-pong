@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ProcessedRepository {
-  public Optional<Message> find(UUID uuid) {
+  public Optional<Message> find(UUID transactionId) {
     throw new UnsupportedOperationException();
   }
 

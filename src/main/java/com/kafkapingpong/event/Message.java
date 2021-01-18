@@ -3,16 +3,16 @@ package com.kafkapingpong.event;
 import java.util.UUID;
 
 public class Message {
-  private final UUID transactionType;
+  private final UUID transactionId;
   private final boolean error;
 
-  public Message(UUID transactionType, boolean error) {
-    this.transactionType = transactionType;
+  public Message(UUID transactionId, boolean error) {
+    this.transactionId = transactionId;
     this.error = error;
   }
 
-  public UUID getTransactionType() {
-    return transactionType;
+  public UUID getTransactionId() {
+    return transactionId;
   }
 
   public boolean isError() {
