@@ -7,9 +7,11 @@ import com.kafkapingpong.service.dto.ProcessRequest;
 public class Processor {
 
   private final ProcessedRepository processedRepository;
+  private final ImageProcessor imageProcessor;
 
-  public Processor(ProcessedRepository processedRepository) {
+  public Processor(ProcessedRepository processedRepository, ImageProcessor imageProcessor) {
     this.processedRepository = processedRepository;
+    this.imageProcessor = imageProcessor;
   }
 
   public void process(ProcessRequest processRequest) {
@@ -17,6 +19,7 @@ public class Processor {
 
     if (message.isEmpty()) {
       processedRepository.store(new Message(processRequest.getTransactionType(), processRequest.isError()));
+      imageProcessor.compute(processRequest.getTransactionType());
     }
   }
 }
