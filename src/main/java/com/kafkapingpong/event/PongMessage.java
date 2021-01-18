@@ -1,4 +1,4 @@
-package com.kafkapingpong.service;
+package com.kafkapingpong.event;
 
 import java.time.Duration;
 import java.util.UUID;

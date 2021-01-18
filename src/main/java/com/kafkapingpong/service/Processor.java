@@ -1,6 +1,7 @@
 package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
+import com.kafkapingpong.event.PongMessage;
 import com.kafkapingpong.repository.ProcessedRepository;
 import com.kafkapingpong.repository.SuccessRepository;
 import com.kafkapingpong.service.dto.ProcessRequest;
