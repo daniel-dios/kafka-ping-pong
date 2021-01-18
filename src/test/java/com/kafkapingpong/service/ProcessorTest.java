@@ -29,7 +29,7 @@ class ProcessorTest {
   private final Processor processor = new Processor(processedRepository, imageProcessor, pongRepository);
 
   @Test
-  void shouldProcessMessageAndComputeImage() {
+  void shouldProcessMessageAndComputeImageOnSuccessInput() {
     when(processedRepository.find(TRANSACTION_TYPE)).thenReturn(Optional.empty());
     when(imageProcessor.compute(TRANSACTION_TYPE)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
@@ -44,7 +44,7 @@ class ProcessorTest {
   }
 
   @Test
-  void shouldProcessMessageAndNotComputeImage() {
+  void shouldProcessMessageAndNotComputeImageOnSucessInput() {
     when(processedRepository.find(TRANSACTION_TYPE)).thenReturn(Optional.of(new Message(TRANSACTION_TYPE, false)));
 
     processor.process(new ProcessRequest(TRANSACTION_TYPE, false));

@@ -28,18 +28,24 @@ public class Processor {
   public void process(ProcessRequest processRequest) {
     final var beginning = Instant.now();
     final var message = processedRepository.find(processRequest.getTransactionType());
+    final Duration duration;
 
-    if (message.isEmpty()) {
-      processedRepository.store(new Message(processRequest.getTransactionType(), processRequest.isError()));
-      final var compute = imageProcessor.compute(processRequest.getTransactionType());
-      final var timeConsumed = Instant.now().minusMillis(beginning.toEpochMilli());
-      final var totalElapsed = compute.plusMillis(timeConsumed.toEpochMilli());
-
-      successRepository.pong(new PongMessage(processRequest.getTransactionType(), "pong", totalElapsed));
+    if (message.isPresent()) {
+      duration = Duration.ofMinutes(0);
     } else {
-      final var totalElapsed = Duration.ofMillis(Instant.now().minusMillis(beginning.toEpochMilli()).toEpochMilli());
-      successRepository.pong(
-          new PongMessage(processRequest.getTransactionType(), "pong", totalElapsed));
+      persist(processRequest);
+      duration = imageProcessor.compute(processRequest.getTransactionType());
     }
+
+    successRepository
+        .pong(new PongMessage(processRequest.getTransactionType(), "pong", getDuration(beginning, duration)));
+  }
+
+  private void persist(ProcessRequest processRequest) {
+    processedRepository.store(new Message(processRequest.getTransactionType(), processRequest.isError()));
+  }
+
+  private Duration getDuration(Instant beginning, Duration duration) {
+    return Duration.ofMillis(Instant.now().minusMillis(beginning.toEpochMilli()).toEpochMilli()).plus(duration);
   }
 }
