@@ -58,6 +58,24 @@ class ProcessorTest {
   }
 
   @Test
+  void shouldProcessMessageAndComputeImageOnSuccessInputWhenPreviousErrors() {
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true)));
+    when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
+
+    processor.process(new ProcessRequest(TRANSACTION_ID, false));
+
+    verify(processedRepository).find(TRANSACTION_ID);
+    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, false)));
+    verify(imageProcessor).compute(TRANSACTION_ID);
+    verify(pongRepository).pong(argThat(
+        s -> s.getPong().equals("pong")
+            && s.getTransactionId().equals(TRANSACTION_ID)
+            && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+  }
+
+  @Test
   void shouldProcessMessageAndNotComputeImageOnSuccessInput() {
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
 

@@ -50,7 +50,7 @@ public class Processor {
       return;
     }
 
-    if (message.isEmpty()) {
+    if (message.isEmpty() || message.stream().allMatch(Message::isError)) {
       persist(processRequest);
       duration = imageProcessor.compute(transactionId);
     } else {
