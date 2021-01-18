@@ -2,7 +2,6 @@ package com.kafkapingpong.repository;
 
 import com.kafkapingpong.event.PongMessage;
 
-public class SuccessRepository {
-  public void pong(PongMessage pongMessage) {
-  }
+public interface SuccessRepository {
+  void pong(PongMessage pongMessage);
 }

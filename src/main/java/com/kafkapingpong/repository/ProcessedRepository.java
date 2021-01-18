@@ -6,12 +6,8 @@ import com.kafkapingpong.event.Message;
 import java.util.List;
 import java.util.UUID;
 
-public class ProcessedRepository {
-  public List<Message> find(UUID transactionId) {
-    throw new UnsupportedOperationException();
-  }
+public interface ProcessedRepository {
+  List<Message> find(UUID transactionId);
 
-  public void store(Message message) {
-    throw new UnsupportedOperationException();
-  }
+  void store(Message message);
 }

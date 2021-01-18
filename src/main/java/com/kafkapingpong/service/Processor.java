@@ -13,6 +13,7 @@ import java.time.Instant;
 
 public class Processor {
 
+  private static final String PONG = "pong";
   private final ProcessedRepository processedRepository;
   private final ImageProcessor imageProcessor;
   private final SuccessRepository successRepository;
@@ -39,12 +40,13 @@ public class Processor {
     final var message = processedRepository.find(transactionId);
     final Duration duration;
 
+    if (processRequest.isError() && message.stream().filter(Message::isError).count() >= attempts) {
+      return;
+    }
+
     if (processRequest.isError()) {
-      if (message.stream().filter(Message::isError).count() >= attempts) {
-        return;
-      }
       persist(processRequest);
-      errorRepository.pongForError(new ErrorPongMessage(transactionId, "pong", true));
+      errorRepository.pongForError(new ErrorPongMessage(transactionId, PONG, true));
       return;
     }
 
@@ -55,7 +57,7 @@ public class Processor {
       duration = Duration.ofMinutes(0);
     }
 
-    final var pongMessage = new PongMessage(transactionId, "pong", getDuration(beginning, duration));
+    final var pongMessage = new PongMessage(transactionId, PONG, getDuration(beginning, duration));
     successRepository.pong(pongMessage);
   }
 
