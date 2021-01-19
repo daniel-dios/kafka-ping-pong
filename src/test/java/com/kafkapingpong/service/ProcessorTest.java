@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 class ProcessorTest {
 
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
+  private static final ProcessRequest SUCCESS_INPUT = new ProcessRequest(TRANSACTION_ID, false);
   private static final List<Message> EMPTY_LIST = List.of();
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(
       new Message(TRANSACTION_ID, true),
@@ -45,17 +46,16 @@ class ProcessorTest {
     imageProcessor = mock(ImageProcessor.class);
     pongRepository = mock(SuccessRepository.class);
     errorRepository = mock(ErrorRepository.class);
-    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 10);
+    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 4);
   }
 
   @Test
-  void shouldProcessMessageAndComputeImageOnSuccessInput() {
+  void shouldComputeSuccessMessage() {
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(EMPTY_LIST);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
-    processor.process(new ProcessRequest(TRANSACTION_ID, false));
+    processor.process(SUCCESS_INPUT);
 
-    verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, false)));
     verify(imageProcessor).compute(TRANSACTION_ID);
     verify(pongRepository).pong(argThat(
@@ -65,13 +65,12 @@ class ProcessorTest {
   }
 
   @Test
-  void shouldProcessMessageAndComputeImageOnSuccessInputWhenPreviousErrors() {
+  void shouldComputeSuccessMessageWhenPreviousError() {
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
-    processor.process(new ProcessRequest(TRANSACTION_ID, false));
+    processor.process(SUCCESS_INPUT);
 
-    verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, false)));
     verify(imageProcessor).compute(TRANSACTION_ID);
     verify(pongRepository).pong(argThat(
@@ -81,12 +80,30 @@ class ProcessorTest {
   }
 
   @Test
-  void shouldProcessMessageAndNotComputeImageOnSuccessInput() {
+  void shouldComputeSuccessMessageWhenPreviousErrorWithSuccessBefore() {
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, false),
+        new Message(TRANSACTION_ID, true)
+    ));
+    when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
+
+    processor.process(SUCCESS_INPUT);
+
+    verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, false)));
+    verify(imageProcessor).compute(TRANSACTION_ID);
+    verify(pongRepository).pong(argThat(s -> s.getPong().equals(PONG)
+        && s.getTransactionId().equals(TRANSACTION_ID)
+        && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+  }
+
+  @Test
+  void shouldComputeSuccessMessageAndNotComputeImageWhenPreviousMessageWasConsumedWithNoError() {
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
 
-    processor.process(new ProcessRequest(TRANSACTION_ID, false));
+    processor.process(SUCCESS_INPUT);
 
-    verify(processedRepository).find(TRANSACTION_ID);
     verify(pongRepository).pong(argThat(
         s -> s.getPong().equals(PONG)
             && s.getTransactionId().equals(TRANSACTION_ID)));
@@ -95,13 +112,11 @@ class ProcessorTest {
   }
 
   @Test
-  void shouldProcessMessageWhenErrorAndNotCompute() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(EMPTY_LIST);
+  void shouldComputeErrorMessageWithPreviousSuccess() {
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
-    verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository).store(argThat(getMessageMatcher(TRANSACTION_ID, true)));
     verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, PONG, true));
     verify(pongRepository, never()).pong(any());
@@ -109,7 +124,7 @@ class ProcessorTest {
   }
 
   @Test
-  void shouldSendErrorMessageBeforeReAttempts() {
+  void shouldComputeErrorMessageWhenReattemptsLowerThanMaximum() {
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
@@ -122,17 +137,33 @@ class ProcessorTest {
   }
 
   @Test
-  void shouldNotSendErrorMessageAfterReAttempts() {
+  void shouldNotComputeErrorMessageWhenReattemptsGreaterThanMaximum() {
     when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
-    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 3);
+    final var processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 3);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
-    verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository, never()).store(any());
     verify(errorRepository, never()).pongForError(any());
     verify(pongRepository, never()).pong(any());
     verify(imageProcessor, never()).compute(any());
+  }
+
+  @Test
+  void shouldProcessMessageAndNotComputeImageOnSuccessInputWhenPreviousErrorsAndLastSuccess() {
+    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, true),
+        new Message(TRANSACTION_ID, false)
+    ));
+
+    processor.process(SUCCESS_INPUT);
+
+    verify(processedRepository).find(TRANSACTION_ID);
+    verify(processedRepository, never()).store(any());
+    verify(imageProcessor, never()).compute(any());
+    verify(pongRepository).pong(argThat(s -> s.getPong().equals(PONG) && s.getTransactionId().equals(TRANSACTION_ID)));
   }
 
 
