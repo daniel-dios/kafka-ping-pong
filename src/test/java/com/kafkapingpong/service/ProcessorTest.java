@@ -24,9 +24,9 @@ import static org.mockito.Mockito.when;
 
 class ProcessorTest {
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
-  private static final Message MESSAGE_SUCCESS = new Message(TRANSACTION_ID, false);
-  private static final Message MESSAGE_ERROR = new Message(TRANSACTION_ID, true);
-  private static final List<Message> LIST_OF_THREE_ERRORS = List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR);
+  private static final Message SUCCESS = new Message(TRANSACTION_ID, false);
+  private static final Message ERROR = new Message(TRANSACTION_ID, true);
+  private static final List<Message> LIST_OF_THREE_ERRORS = List.of(ERROR, ERROR, ERROR);
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
 
   private MessageRepository messageRepository;
@@ -48,11 +48,11 @@ class ProcessorTest {
     when(messageRepository.find(TRANSACTION_ID)).thenReturn(errorList);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
-    processor.process(MESSAGE_SUCCESS);
+    processor.process(SUCCESS);
 
-    verify(messageRepository).store(same(MESSAGE_SUCCESS));
+    verify(messageRepository).store(same(SUCCESS));
     verify(imageProcessor).compute(TRANSACTION_ID);
-    verify(pongRepository).pong(same(MESSAGE_SUCCESS), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+    verify(pongRepository).pong(same(SUCCESS), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   private static Stream<Arguments> getErrors() {
@@ -64,26 +64,23 @@ class ProcessorTest {
 
   @Test
   void shouldComputeSuccessMessageWhenPreviousErrorWithSuccessBefore() {
-    when(messageRepository.find(TRANSACTION_ID))
-        .thenReturn(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS, MESSAGE_ERROR));
-    when(imageProcessor.compute(TRANSACTION_ID))
-        .thenReturn(DURATION_FOR_COMPUTE_IMAGE);
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(ERROR, ERROR, SUCCESS, ERROR));
+    when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
-    processor.process(MESSAGE_SUCCESS);
+    processor.process(SUCCESS);
 
-    verify(messageRepository).store(same(MESSAGE_SUCCESS));
+    verify(messageRepository).store(same(SUCCESS));
     verify(imageProcessor).compute(TRANSACTION_ID);
-    verify(pongRepository).pong(same(MESSAGE_SUCCESS), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+    verify(pongRepository).pong(same(SUCCESS), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   @Test
   void shouldComputeSuccessMessageAndNotComputeImageWhenPreviousMessageWasConsumedWithNoError() {
-    when(messageRepository.find(TRANSACTION_ID))
-        .thenReturn(List.of(MESSAGE_SUCCESS));
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(SUCCESS));
 
-    processor.process(MESSAGE_SUCCESS);
+    processor.process(SUCCESS);
 
-    verify(pongRepository).pong(same(MESSAGE_SUCCESS), any());
+    verify(pongRepository).pong(same(SUCCESS), any());
     verify(messageRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -93,10 +90,10 @@ class ProcessorTest {
   void shouldComputeErrorMessageWithPreviousSuccess(List<Message> value) {
     when(messageRepository.find(TRANSACTION_ID)).thenReturn(value);
 
-    processor.process(MESSAGE_ERROR);
+    processor.process(ERROR);
 
-    verify(messageRepository).store(same(MESSAGE_ERROR));
-    verify(pongRepository).pongForError(same(MESSAGE_ERROR));
+    verify(messageRepository).store(same(ERROR));
+    verify(pongRepository).pongForError(same(ERROR));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -104,8 +101,8 @@ class ProcessorTest {
   private static Stream<Arguments> getSuccessStatus() {
     return Stream.of(
         Arguments.of(List.of()),
-        Arguments.of(List.of(MESSAGE_SUCCESS)),
-        Arguments.of(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS))
+        Arguments.of(List.of(SUCCESS)),
+        Arguments.of(List.of(ERROR, ERROR, ERROR, SUCCESS))
     );
   }
 
@@ -113,11 +110,11 @@ class ProcessorTest {
   void shouldComputeErrorMessageWhenReattemptsLowerThanMaximum() {
     when(messageRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
 
-    processor.process(MESSAGE_ERROR);
+    processor.process(ERROR);
 
     verify(messageRepository).find(TRANSACTION_ID);
-    verify(messageRepository).store(same(MESSAGE_ERROR));
-    verify(pongRepository).pongForError(same(MESSAGE_ERROR));
+    verify(messageRepository).store(same(ERROR));
+    verify(pongRepository).pongForError(same(ERROR));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -127,7 +124,7 @@ class ProcessorTest {
     when(messageRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
     final var processor = new Processor(messageRepository, imageProcessor, pongRepository, 3);
 
-    processor.process(MESSAGE_ERROR);
+    processor.process(ERROR);
 
     verify(messageRepository, never()).store(any());
     verify(pongRepository, never()).pongForError(any());
@@ -137,14 +134,13 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndNotComputeImageOnSuccessInputWhenPreviousErrorsAndLastSuccess() {
-    when(messageRepository.find(TRANSACTION_ID))
-        .thenReturn(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS));
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(ERROR, ERROR, ERROR, SUCCESS));
 
-    processor.process(MESSAGE_SUCCESS);
+    processor.process(SUCCESS);
 
     verify(messageRepository).find(TRANSACTION_ID);
     verify(messageRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
-    verify(pongRepository).pong(same(MESSAGE_SUCCESS), any());
+    verify(pongRepository).pong(same(SUCCESS), any());
   }
 }
