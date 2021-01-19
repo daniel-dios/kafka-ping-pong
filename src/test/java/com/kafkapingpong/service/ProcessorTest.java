@@ -1,7 +1,6 @@
 package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
-import com.kafkapingpong.event.PongMessage;
 import com.kafkapingpong.repository.ErrorRepository;
 import com.kafkapingpong.repository.ProcessedRepository;
 import com.kafkapingpong.repository.SuccessRepository;
@@ -32,7 +31,6 @@ class ProcessorTest {
   private static final Message MESSAGE_ERROR = new Message(TRANSACTION_ID, true);
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR);
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
-  private static final String PONG = "pong";
 
   private ProcessedRepository processedRepository;
   private ImageProcessor imageProcessor;
@@ -59,10 +57,7 @@ class ProcessorTest {
 
     verify(processedRepository).store(getMessage(false));
     verify(imageProcessor).compute(TRANSACTION_ID);
-    verify(pongRepository).pong(argThat(
-        s -> s.getPong().equals(PONG)
-            && s.getTransactionId().equals(TRANSACTION_ID)
-            && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+    verify(pongRepository).pong(getMessage(false), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   private static Stream<Arguments> getErrors() {
@@ -83,9 +78,7 @@ class ProcessorTest {
 
     verify(processedRepository).store(getMessage(false));
     verify(imageProcessor).compute(TRANSACTION_ID);
-    verify(pongRepository).pong(argThat(s -> s.getPong().equals(PONG)
-        && s.getTransactionId().equals(TRANSACTION_ID)
-        && s.getOfMillis().compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+    verify(pongRepository).pong(getMessage(false), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   @Test
@@ -95,7 +88,7 @@ class ProcessorTest {
 
     processor.process(SUCCESS_INPUT);
 
-    verify(pongRepository).pong(getPongMessage());
+    verify(pongRepository).pong(getMessage(false), any());
     verify(processedRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -110,7 +103,7 @@ class ProcessorTest {
 
     verify(processedRepository).store(getMessage(true));
     verify(errorRepository).pongForError(getMessage(true));
-    verify(pongRepository, never()).pong(any());
+    verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
 
@@ -118,11 +111,7 @@ class ProcessorTest {
     return Stream.of(
         Arguments.of(List.of()),
         Arguments.of(List.of(MESSAGE_SUCCESS)),
-        Arguments.of(List.of(
-            MESSAGE_ERROR,
-            MESSAGE_ERROR,
-            MESSAGE_ERROR,
-            MESSAGE_SUCCESS))
+        Arguments.of(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS))
     );
   }
 
@@ -136,7 +125,7 @@ class ProcessorTest {
     verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository).store(getMessage(true));
     verify(errorRepository).pongForError(getMessage(true));
-    verify(pongRepository, never()).pong(any());
+    verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
 
@@ -150,7 +139,7 @@ class ProcessorTest {
 
     verify(processedRepository, never()).store(any());
     verify(errorRepository, never()).pongForError(any());
-    verify(pongRepository, never()).pong(any());
+    verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
 
@@ -164,11 +153,7 @@ class ProcessorTest {
     verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
-    verify(pongRepository).pong(getPongMessage());
-  }
-
-  private PongMessage getPongMessage() {
-    return argThat(s -> s.getPong().equals(PONG) && s.getTransactionId().equals(TRANSACTION_ID));
+    verify(pongRepository).pong(getMessage(false), any());
   }
 
   private Message getMessage(boolean error) {

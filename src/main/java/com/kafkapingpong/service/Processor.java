@@ -1,7 +1,6 @@
 package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
-import com.kafkapingpong.event.PongMessage;
 import com.kafkapingpong.repository.ErrorRepository;
 import com.kafkapingpong.repository.ProcessedRepository;
 import com.kafkapingpong.repository.SuccessRepository;
@@ -48,9 +47,9 @@ public class Processor {
     } else if (!lastMessageWasSuccess(compact)) {
       final var computeTime = imageProcessor.compute(id);
       processedRepository.store(new Message(id, processRequest.isError()));
-      successRepository.pong(new PongMessage(id, "pong", ofMillis(currentTimeMillis() - beginning).plus(computeTime)));
+      successRepository.pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning).plus(computeTime));
     } else {
-      successRepository.pong(new PongMessage(id, "pong", ofMillis(currentTimeMillis() - beginning)));
+      successRepository.pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning));
     }
   }
 
