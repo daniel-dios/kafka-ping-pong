@@ -1,9 +1,8 @@
 package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
-import com.kafkapingpong.repository.ErrorRepository;
+import com.kafkapingpong.repository.PongRepository;
 import com.kafkapingpong.repository.ProcessedRepository;
-import com.kafkapingpong.repository.SuccessRepository;
 import com.kafkapingpong.service.dto.ProcessRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,17 +33,15 @@ class ProcessorTest {
 
   private ProcessedRepository processedRepository;
   private ImageProcessor imageProcessor;
-  private SuccessRepository pongRepository;
-  private ErrorRepository errorRepository;
+  private PongRepository pongRepository;
   private Processor processor;
 
   @BeforeEach
   void setUp() {
     processedRepository = mock(ProcessedRepository.class);
     imageProcessor = mock(ImageProcessor.class);
-    pongRepository = mock(SuccessRepository.class);
-    errorRepository = mock(ErrorRepository.class);
-    processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 4);
+    pongRepository = mock(PongRepository.class);
+    processor = new Processor(processedRepository, imageProcessor, pongRepository, 4);
   }
 
   @ParameterizedTest
@@ -102,7 +99,7 @@ class ProcessorTest {
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
     verify(processedRepository).store(getMessage(true));
-    verify(errorRepository).pongForError(getMessage(true));
+    verify(pongRepository).pongForError(getMessage(true));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -124,7 +121,7 @@ class ProcessorTest {
 
     verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository).store(getMessage(true));
-    verify(errorRepository).pongForError(getMessage(true));
+    verify(pongRepository).pongForError(getMessage(true));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -133,12 +130,12 @@ class ProcessorTest {
   void shouldNotComputeErrorMessageWhenReattemptsGreaterThanMaximum() {
     when(processedRepository.find(TRANSACTION_ID))
         .thenReturn(LIST_OF_THREE_ERRORS);
-    final var processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 3);
+    final var processor = new Processor(processedRepository, imageProcessor, pongRepository, 3);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
     verify(processedRepository, never()).store(any());
-    verify(errorRepository, never()).pongForError(any());
+    verify(pongRepository, never()).pongForError(any());
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }

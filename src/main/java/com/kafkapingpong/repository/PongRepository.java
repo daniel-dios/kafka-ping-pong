@@ -2,6 +2,10 @@ package com.kafkapingpong.repository;
 
 import com.kafkapingpong.event.Message;
 
-public interface ErrorRepository {
+import java.time.Duration;
+
+public interface PongRepository {
+  void pong(Message pongMessage, Duration duration);
+
   void pongForError(Message errorPongMessage);
 }
