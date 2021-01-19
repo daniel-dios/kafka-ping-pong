@@ -1,14 +1,13 @@
 package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
-import com.kafkapingpong.repository.PongRepository;
 import com.kafkapingpong.repository.MessageRepository;
+import com.kafkapingpong.repository.PongRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentMatcher;
 
 import java.time.Duration;
 import java.util.List;
@@ -17,6 +16,7 @@ import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,9 +50,9 @@ class ProcessorTest {
 
     processor.process(MESSAGE_SUCCESS);
 
-    verify(messageRepository).store(getMessage(false));
+    verify(messageRepository).store(same(MESSAGE_SUCCESS));
     verify(imageProcessor).compute(TRANSACTION_ID);
-    verify(pongRepository).pong(getMessage(false), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+    verify(pongRepository).pong(same(MESSAGE_SUCCESS), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   private static Stream<Arguments> getErrors() {
@@ -71,9 +71,9 @@ class ProcessorTest {
 
     processor.process(MESSAGE_SUCCESS);
 
-    verify(messageRepository).store(getMessage(false));
+    verify(messageRepository).store(same(MESSAGE_SUCCESS));
     verify(imageProcessor).compute(TRANSACTION_ID);
-    verify(pongRepository).pong(getMessage(false), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
+    verify(pongRepository).pong(same(MESSAGE_SUCCESS), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   @Test
@@ -83,7 +83,7 @@ class ProcessorTest {
 
     processor.process(MESSAGE_SUCCESS);
 
-    verify(pongRepository).pong(getMessage(false), any());
+    verify(pongRepository).pong(same(MESSAGE_SUCCESS), any());
     verify(messageRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -91,13 +91,12 @@ class ProcessorTest {
   @ParameterizedTest
   @MethodSource("getSuccessStatus")
   void shouldComputeErrorMessageWithPreviousSuccess(List<Message> value) {
-    when(messageRepository.find(TRANSACTION_ID))
-        .thenReturn(value);
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(value);
 
     processor.process(MESSAGE_ERROR);
 
-    verify(messageRepository).store(getMessage(true));
-    verify(pongRepository).pongForError(getMessage(true));
+    verify(messageRepository).store(same(MESSAGE_ERROR));
+    verify(pongRepository).pongForError(same(MESSAGE_ERROR));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -112,22 +111,20 @@ class ProcessorTest {
 
   @Test
   void shouldComputeErrorMessageWhenReattemptsLowerThanMaximum() {
-    when(messageRepository.find(TRANSACTION_ID))
-        .thenReturn(LIST_OF_THREE_ERRORS);
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
 
     processor.process(MESSAGE_ERROR);
 
     verify(messageRepository).find(TRANSACTION_ID);
-    verify(messageRepository).store(getMessage(true));
-    verify(pongRepository).pongForError(getMessage(true));
+    verify(messageRepository).store(same(MESSAGE_ERROR));
+    verify(pongRepository).pongForError(same(MESSAGE_ERROR));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
   }
 
   @Test
   void shouldNotComputeErrorMessageWhenReattemptsGreaterThanMaximum() {
-    when(messageRepository.find(TRANSACTION_ID))
-        .thenReturn(LIST_OF_THREE_ERRORS);
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
     final var processor = new Processor(messageRepository, imageProcessor, pongRepository, 3);
 
     processor.process(MESSAGE_ERROR);
@@ -148,14 +145,6 @@ class ProcessorTest {
     verify(messageRepository).find(TRANSACTION_ID);
     verify(messageRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
-    verify(pongRepository).pong(getMessage(false), any());
-  }
-
-  private Message getMessage(boolean error) {
-    return argThat(getMessageMatcher(error));
-  }
-
-  private ArgumentMatcher<Message> getMessageMatcher(boolean expectedError) {
-    return s -> (s.isError() == expectedError && s.getTransactionId().equals(ProcessorTest.TRANSACTION_ID));
+    verify(pongRepository).pong(same(MESSAGE_SUCCESS), any());
   }
 }

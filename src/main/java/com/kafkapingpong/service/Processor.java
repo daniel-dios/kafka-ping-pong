@@ -28,23 +28,22 @@ public class Processor {
     this.maxAttempts = maxAttempts;
   }
 
-  public void process(Message processRequest) {
+  public void process(Message message) {
     final var beginning = currentTimeMillis();
-    final var id = processRequest.getTransactionId();
+    final var id = message.getTransactionId();
     final var compact = compact(messageRepository.find(id));
 
-    if (processRequest.isError()) {
+    if (message.isError()) {
       if (!exhaustedAttempts(compact)) {
-        messageRepository.store(new Message(id, processRequest.isError()));
-        pongRepository.pongForError(new Message(id, processRequest.isError()));
+        messageRepository.store(message);
+        pongRepository.pongForError(message);
       }
     } else if (!lastMessageWasSuccess(compact)) {
       final var computeTime = imageProcessor.compute(id);
-      messageRepository.store(new Message(id, processRequest.isError()));
-      pongRepository
-          .pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning).plus(computeTime));
+      messageRepository.store(message);
+      pongRepository.pong(message, ofMillis(currentTimeMillis() - beginning).plus(computeTime));
     } else {
-      pongRepository.pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning));
+      pongRepository.pong(message, ofMillis(currentTimeMillis() - beginning));
     }
   }
 
