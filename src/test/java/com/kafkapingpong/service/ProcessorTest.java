@@ -30,7 +30,6 @@ class ProcessorTest {
 
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
   private static final ProcessRequest SUCCESS_INPUT = new ProcessRequest(TRANSACTION_ID, false);
-  private static final List<Message> EMPTY_LIST = List.of();
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(
       new Message(TRANSACTION_ID, true),
       new Message(TRANSACTION_ID, true),
@@ -120,10 +119,6 @@ class ProcessorTest {
     verify(imageProcessor, never()).compute(any());
   }
 
-  private Message getMessage(boolean b) {
-    return argThat(getMessageMatcher(b));
-  }
-
   private static Stream<Arguments> getSuccessStatus() {
     return Stream.of(
         Arguments.of(List.of()),
@@ -181,6 +176,10 @@ class ProcessorTest {
 
   private PongMessage getPongMessage() {
     return argThat(s -> s.getPong().equals(PONG) && s.getTransactionId().equals(TRANSACTION_ID));
+  }
+
+  private Message getMessage(boolean b) {
+    return argThat(getMessageMatcher(b));
   }
 
   private ArgumentMatcher<Message> getMessageMatcher(boolean expectedError) {
