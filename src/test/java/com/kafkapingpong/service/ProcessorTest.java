@@ -1,6 +1,5 @@
 package com.kafkapingpong.service;
 
-import com.kafkapingpong.event.ErrorPongMessage;
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.PongMessage;
 import com.kafkapingpong.repository.ErrorRepository;
@@ -27,14 +26,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ProcessorTest {
-
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
+  private static final Message MESSAGE_SUCCESS = new Message(TRANSACTION_ID, false);
   private static final ProcessRequest SUCCESS_INPUT = new ProcessRequest(TRANSACTION_ID, false);
-  private static final List<Message> LIST_OF_THREE_ERRORS = List.of(
-      new Message(TRANSACTION_ID, true),
-      new Message(TRANSACTION_ID, true),
-      new Message(TRANSACTION_ID, true)
-  );
+  private static final Message MESSAGE_ERROR = new Message(TRANSACTION_ID, true);
+  private static final List<Message> LIST_OF_THREE_ERRORS = List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR);
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
   private static final String PONG = "pong";
 
@@ -78,13 +74,10 @@ class ProcessorTest {
 
   @Test
   void shouldComputeSuccessMessageWhenPreviousErrorWithSuccessBefore() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, false),
-        new Message(TRANSACTION_ID, true)
-    ));
-    when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
+    when(processedRepository.find(TRANSACTION_ID))
+        .thenReturn(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS, MESSAGE_ERROR));
+    when(imageProcessor.compute(TRANSACTION_ID))
+        .thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(SUCCESS_INPUT);
 
@@ -97,7 +90,8 @@ class ProcessorTest {
 
   @Test
   void shouldComputeSuccessMessageAndNotComputeImageWhenPreviousMessageWasConsumedWithNoError() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(new Message(TRANSACTION_ID, false)));
+    when(processedRepository.find(TRANSACTION_ID))
+        .thenReturn(List.of(MESSAGE_SUCCESS));
 
     processor.process(SUCCESS_INPUT);
 
@@ -109,12 +103,13 @@ class ProcessorTest {
   @ParameterizedTest
   @MethodSource("getSuccessStatus")
   void shouldComputeErrorMessageWithPreviousSuccess(List<Message> value) {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(value);
+    when(processedRepository.find(TRANSACTION_ID))
+        .thenReturn(value);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
     verify(processedRepository).store(getMessage(true));
-    verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, PONG, true));
+    verify(errorRepository).pongForError(getMessage(true));
     verify(pongRepository, never()).pong(any());
     verify(imageProcessor, never()).compute(any());
   }
@@ -122,31 +117,33 @@ class ProcessorTest {
   private static Stream<Arguments> getSuccessStatus() {
     return Stream.of(
         Arguments.of(List.of()),
-        Arguments.of(List.of(new Message(TRANSACTION_ID, false))),
+        Arguments.of(List.of(MESSAGE_SUCCESS)),
         Arguments.of(List.of(
-            new Message(TRANSACTION_ID, true),
-            new Message(TRANSACTION_ID, true),
-            new Message(TRANSACTION_ID, true),
-            new Message(TRANSACTION_ID, false)))
+            MESSAGE_ERROR,
+            MESSAGE_ERROR,
+            MESSAGE_ERROR,
+            MESSAGE_SUCCESS))
     );
   }
 
   @Test
   void shouldComputeErrorMessageWhenReattemptsLowerThanMaximum() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
+    when(processedRepository.find(TRANSACTION_ID))
+        .thenReturn(LIST_OF_THREE_ERRORS);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
     verify(processedRepository).find(TRANSACTION_ID);
     verify(processedRepository).store(getMessage(true));
-    verify(errorRepository).pongForError(new ErrorPongMessage(TRANSACTION_ID, PONG, true));
+    verify(errorRepository).pongForError(getMessage(true));
     verify(pongRepository, never()).pong(any());
     verify(imageProcessor, never()).compute(any());
   }
 
   @Test
   void shouldNotComputeErrorMessageWhenReattemptsGreaterThanMaximum() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
+    when(processedRepository.find(TRANSACTION_ID))
+        .thenReturn(LIST_OF_THREE_ERRORS);
     final var processor = new Processor(processedRepository, imageProcessor, pongRepository, errorRepository, 3);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
@@ -159,12 +156,8 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndNotComputeImageOnSuccessInputWhenPreviousErrorsAndLastSuccess() {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(List.of(
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, true),
-        new Message(TRANSACTION_ID, false)
-    ));
+    when(processedRepository.find(TRANSACTION_ID))
+        .thenReturn(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS));
 
     processor.process(SUCCESS_INPUT);
 
@@ -178,8 +171,8 @@ class ProcessorTest {
     return argThat(s -> s.getPong().equals(PONG) && s.getTransactionId().equals(TRANSACTION_ID));
   }
 
-  private Message getMessage(boolean b) {
-    return argThat(getMessageMatcher(b));
+  private Message getMessage(boolean error) {
+    return argThat(getMessageMatcher(error));
   }
 
   private ArgumentMatcher<Message> getMessageMatcher(boolean expectedError) {

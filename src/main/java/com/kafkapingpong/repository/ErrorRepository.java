@@ -1,7 +1,7 @@
 package com.kafkapingpong.repository;
 
-import com.kafkapingpong.event.ErrorPongMessage;
+import com.kafkapingpong.event.Message;
 
 public interface ErrorRepository {
-  void pongForError(ErrorPongMessage errorPongMessage);
+  void pongForError(Message errorPongMessage);
 }
