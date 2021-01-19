@@ -39,6 +39,7 @@ public class Processor {
     }
 
     if (message.isError() && exhaustedAttempts(compact)) {
+      messageRepository.store(message);
       pongRepository.dlq(message);
       return;
     }
