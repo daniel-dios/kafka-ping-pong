@@ -29,22 +29,26 @@ public class Processor {
   }
 
   public void process(Message message) {
-    final var beginning = currentTimeMillis();
-    final var id = message.getTransactionId();
-    final var compact = compact(messageRepository.find(id));
+    var beginning = currentTimeMillis();
+    final var compact = compact(messageRepository.find(message.getTransactionId()));
 
-    if (message.isError()) {
-      if (!exhaustedAttempts(compact)) {
-        messageRepository.store(message);
-        pongRepository.pongForError(message);
-      }
-    } else if (!lastMessageWasSuccess(compact)) {
-      final var computeTime = imageProcessor.compute(id);
+    if (message.isError() && !exhaustedAttempts(compact)) {
       messageRepository.store(message);
-      pongRepository.pong(message, ofMillis(currentTimeMillis() - beginning).plus(computeTime));
-    } else {
-      pongRepository.pong(message, ofMillis(currentTimeMillis() - beginning));
+      pongRepository.pongForError(message);
+      return;
     }
+
+    if (message.isError() && exhaustedAttempts(compact)) {
+      pongRepository.dlq(message);
+      return;
+    }
+
+    if (!lastMessageWasSuccess(compact)) {
+      beginning -= imageProcessor.compute(message.getTransactionId()).toMillis();
+      messageRepository.store(message);
+    }
+
+    pongRepository.pong(message, ofMillis(currentTimeMillis() - beginning));
   }
 
   private boolean exhaustedAttempts(List<Message> compact) {

@@ -5,7 +5,9 @@ import com.kafkapingpong.event.Message;
 import java.time.Duration;
 
 public interface PongRepository {
-  void pong(Message pongMessage, Duration duration);
+  void pong(Message message, Duration duration);
 
-  void pongForError(Message errorPongMessage);
+  void pongForError(Message message);
+
+  void dlq(Message message);
 }

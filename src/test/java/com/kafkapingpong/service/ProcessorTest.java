@@ -127,6 +127,7 @@ class ProcessorTest {
     processor.process(ERROR);
 
     verify(messageRepository, never()).store(any());
+    verify(pongRepository).dlq(same(ERROR));
     verify(pongRepository, never()).pongForError(any());
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
