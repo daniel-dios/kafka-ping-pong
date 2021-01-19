@@ -1,7 +1,7 @@
 package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
-import com.kafkapingpong.repository.ProcessedRepository;
+import com.kafkapingpong.repository.MessageRepository;
 import com.kafkapingpong.repository.PongRepository;
 import com.kafkapingpong.service.dto.ProcessRequest;
 
@@ -13,18 +13,18 @@ import static java.time.Duration.ofMillis;
 
 public class Processor {
 
-  private final ProcessedRepository processedRepository;
+  private final MessageRepository messageRepository;
   private final ImageProcessor imageProcessor;
   private final PongRepository pongRepository;
   private final int maxAttempts;
 
   public Processor(
-      ProcessedRepository processedRepository,
+      MessageRepository messageRepository,
       ImageProcessor imageProcessor,
       PongRepository pongRepository,
       int maxAttempts) {
 
-    this.processedRepository = processedRepository;
+    this.messageRepository = messageRepository;
     this.imageProcessor = imageProcessor;
     this.pongRepository = pongRepository;
     this.maxAttempts = maxAttempts;
@@ -33,16 +33,16 @@ public class Processor {
   public void process(ProcessRequest processRequest) {
     final var beginning = currentTimeMillis();
     final var id = processRequest.getTransactionId();
-    final var compact = compact(processedRepository.find(id));
+    final var compact = compact(messageRepository.find(id));
 
     if (processRequest.isError()) {
       if (!exhaustedAttempts(compact)) {
-        processedRepository.store(new Message(id, processRequest.isError()));
+        messageRepository.store(new Message(id, processRequest.isError()));
         pongRepository.pongForError(new Message(id, processRequest.isError()));
       }
     } else if (!lastMessageWasSuccess(compact)) {
       final var computeTime = imageProcessor.compute(id);
-      processedRepository.store(new Message(id, processRequest.isError()));
+      messageRepository.store(new Message(id, processRequest.isError()));
       pongRepository.pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning).plus(computeTime));
     } else {
       pongRepository.pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning));

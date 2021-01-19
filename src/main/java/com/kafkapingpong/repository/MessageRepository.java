@@ -6,7 +6,7 @@ import com.kafkapingpong.event.Message;
 import java.util.List;
 import java.util.UUID;
 
-public interface ProcessedRepository {
+public interface MessageRepository {
   List<Message> find(UUID transactionId);
 
   void store(Message message);

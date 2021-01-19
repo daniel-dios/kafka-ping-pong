@@ -2,7 +2,7 @@ package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.repository.PongRepository;
-import com.kafkapingpong.repository.ProcessedRepository;
+import com.kafkapingpong.repository.MessageRepository;
 import com.kafkapingpong.service.dto.ProcessRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,28 +31,28 @@ class ProcessorTest {
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR);
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
 
-  private ProcessedRepository processedRepository;
+  private MessageRepository messageRepository;
   private ImageProcessor imageProcessor;
   private PongRepository pongRepository;
   private Processor processor;
 
   @BeforeEach
   void setUp() {
-    processedRepository = mock(ProcessedRepository.class);
+    messageRepository = mock(MessageRepository.class);
     imageProcessor = mock(ImageProcessor.class);
     pongRepository = mock(PongRepository.class);
-    processor = new Processor(processedRepository, imageProcessor, pongRepository, 4);
+    processor = new Processor(messageRepository, imageProcessor, pongRepository, 4);
   }
 
   @ParameterizedTest
   @MethodSource("getErrors")
   void shouldComputeSuccessMessage(List<Message> errorList) {
-    when(processedRepository.find(TRANSACTION_ID)).thenReturn(errorList);
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(errorList);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(SUCCESS_INPUT);
 
-    verify(processedRepository).store(getMessage(false));
+    verify(messageRepository).store(getMessage(false));
     verify(imageProcessor).compute(TRANSACTION_ID);
     verify(pongRepository).pong(getMessage(false), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
@@ -66,39 +66,39 @@ class ProcessorTest {
 
   @Test
   void shouldComputeSuccessMessageWhenPreviousErrorWithSuccessBefore() {
-    when(processedRepository.find(TRANSACTION_ID))
+    when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS, MESSAGE_ERROR));
     when(imageProcessor.compute(TRANSACTION_ID))
         .thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(SUCCESS_INPUT);
 
-    verify(processedRepository).store(getMessage(false));
+    verify(messageRepository).store(getMessage(false));
     verify(imageProcessor).compute(TRANSACTION_ID);
     verify(pongRepository).pong(getMessage(false), argThat(m -> m.compareTo(DURATION_FOR_COMPUTE_IMAGE) >= 0));
   }
 
   @Test
   void shouldComputeSuccessMessageAndNotComputeImageWhenPreviousMessageWasConsumedWithNoError() {
-    when(processedRepository.find(TRANSACTION_ID))
+    when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(List.of(MESSAGE_SUCCESS));
 
     processor.process(SUCCESS_INPUT);
 
     verify(pongRepository).pong(getMessage(false), any());
-    verify(processedRepository, never()).store(any());
+    verify(messageRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
   }
 
   @ParameterizedTest
   @MethodSource("getSuccessStatus")
   void shouldComputeErrorMessageWithPreviousSuccess(List<Message> value) {
-    when(processedRepository.find(TRANSACTION_ID))
+    when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(value);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
-    verify(processedRepository).store(getMessage(true));
+    verify(messageRepository).store(getMessage(true));
     verify(pongRepository).pongForError(getMessage(true));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
@@ -114,13 +114,13 @@ class ProcessorTest {
 
   @Test
   void shouldComputeErrorMessageWhenReattemptsLowerThanMaximum() {
-    when(processedRepository.find(TRANSACTION_ID))
+    when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(LIST_OF_THREE_ERRORS);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
-    verify(processedRepository).find(TRANSACTION_ID);
-    verify(processedRepository).store(getMessage(true));
+    verify(messageRepository).find(TRANSACTION_ID);
+    verify(messageRepository).store(getMessage(true));
     verify(pongRepository).pongForError(getMessage(true));
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
@@ -128,13 +128,13 @@ class ProcessorTest {
 
   @Test
   void shouldNotComputeErrorMessageWhenReattemptsGreaterThanMaximum() {
-    when(processedRepository.find(TRANSACTION_ID))
+    when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(LIST_OF_THREE_ERRORS);
-    final var processor = new Processor(processedRepository, imageProcessor, pongRepository, 3);
+    final var processor = new Processor(messageRepository, imageProcessor, pongRepository, 3);
 
     processor.process(new ProcessRequest(TRANSACTION_ID, true));
 
-    verify(processedRepository, never()).store(any());
+    verify(messageRepository, never()).store(any());
     verify(pongRepository, never()).pongForError(any());
     verify(pongRepository, never()).pong(any(), any());
     verify(imageProcessor, never()).compute(any());
@@ -142,13 +142,13 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndNotComputeImageOnSuccessInputWhenPreviousErrorsAndLastSuccess() {
-    when(processedRepository.find(TRANSACTION_ID))
+    when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS));
 
     processor.process(SUCCESS_INPUT);
 
-    verify(processedRepository).find(TRANSACTION_ID);
-    verify(processedRepository, never()).store(any());
+    verify(messageRepository).find(TRANSACTION_ID);
+    verify(messageRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
     verify(pongRepository).pong(getMessage(false), any());
   }
