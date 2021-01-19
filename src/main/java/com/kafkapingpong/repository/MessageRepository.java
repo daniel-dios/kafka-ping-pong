@@ -1,6 +1,5 @@
 package com.kafkapingpong.repository;
 
-
 import com.kafkapingpong.event.Message;
 
 import java.util.List;

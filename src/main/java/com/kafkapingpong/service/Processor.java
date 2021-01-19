@@ -3,7 +3,6 @@ package com.kafkapingpong.service;
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.repository.MessageRepository;
 import com.kafkapingpong.repository.PongRepository;
-import com.kafkapingpong.service.dto.ProcessRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,14 +22,13 @@ public class Processor {
       ImageProcessor imageProcessor,
       PongRepository pongRepository,
       int maxAttempts) {
-
     this.messageRepository = messageRepository;
     this.imageProcessor = imageProcessor;
     this.pongRepository = pongRepository;
     this.maxAttempts = maxAttempts;
   }
 
-  public void process(ProcessRequest processRequest) {
+  public void process(Message processRequest) {
     final var beginning = currentTimeMillis();
     final var id = processRequest.getTransactionId();
     final var compact = compact(messageRepository.find(id));
@@ -43,7 +41,8 @@ public class Processor {
     } else if (!lastMessageWasSuccess(compact)) {
       final var computeTime = imageProcessor.compute(id);
       messageRepository.store(new Message(id, processRequest.isError()));
-      pongRepository.pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning).plus(computeTime));
+      pongRepository
+          .pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning).plus(computeTime));
     } else {
       pongRepository.pong(new Message(id, processRequest.isError()), ofMillis(currentTimeMillis() - beginning));
     }

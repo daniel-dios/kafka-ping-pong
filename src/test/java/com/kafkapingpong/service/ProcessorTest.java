@@ -3,7 +3,6 @@ package com.kafkapingpong.service;
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.repository.PongRepository;
 import com.kafkapingpong.repository.MessageRepository;
-import com.kafkapingpong.service.dto.ProcessRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,7 +25,6 @@ import static org.mockito.Mockito.when;
 class ProcessorTest {
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
   private static final Message MESSAGE_SUCCESS = new Message(TRANSACTION_ID, false);
-  private static final ProcessRequest SUCCESS_INPUT = new ProcessRequest(TRANSACTION_ID, false);
   private static final Message MESSAGE_ERROR = new Message(TRANSACTION_ID, true);
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR);
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
@@ -50,7 +48,7 @@ class ProcessorTest {
     when(messageRepository.find(TRANSACTION_ID)).thenReturn(errorList);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
-    processor.process(SUCCESS_INPUT);
+    processor.process(MESSAGE_SUCCESS);
 
     verify(messageRepository).store(getMessage(false));
     verify(imageProcessor).compute(TRANSACTION_ID);
@@ -71,7 +69,7 @@ class ProcessorTest {
     when(imageProcessor.compute(TRANSACTION_ID))
         .thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
-    processor.process(SUCCESS_INPUT);
+    processor.process(MESSAGE_SUCCESS);
 
     verify(messageRepository).store(getMessage(false));
     verify(imageProcessor).compute(TRANSACTION_ID);
@@ -83,7 +81,7 @@ class ProcessorTest {
     when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(List.of(MESSAGE_SUCCESS));
 
-    processor.process(SUCCESS_INPUT);
+    processor.process(MESSAGE_SUCCESS);
 
     verify(pongRepository).pong(getMessage(false), any());
     verify(messageRepository, never()).store(any());
@@ -96,7 +94,7 @@ class ProcessorTest {
     when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(value);
 
-    processor.process(new ProcessRequest(TRANSACTION_ID, true));
+    processor.process(MESSAGE_ERROR);
 
     verify(messageRepository).store(getMessage(true));
     verify(pongRepository).pongForError(getMessage(true));
@@ -117,7 +115,7 @@ class ProcessorTest {
     when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(LIST_OF_THREE_ERRORS);
 
-    processor.process(new ProcessRequest(TRANSACTION_ID, true));
+    processor.process(MESSAGE_ERROR);
 
     verify(messageRepository).find(TRANSACTION_ID);
     verify(messageRepository).store(getMessage(true));
@@ -132,7 +130,7 @@ class ProcessorTest {
         .thenReturn(LIST_OF_THREE_ERRORS);
     final var processor = new Processor(messageRepository, imageProcessor, pongRepository, 3);
 
-    processor.process(new ProcessRequest(TRANSACTION_ID, true));
+    processor.process(MESSAGE_ERROR);
 
     verify(messageRepository, never()).store(any());
     verify(pongRepository, never()).pongForError(any());
@@ -145,7 +143,7 @@ class ProcessorTest {
     when(messageRepository.find(TRANSACTION_ID))
         .thenReturn(List.of(MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_ERROR, MESSAGE_SUCCESS));
 
-    processor.process(SUCCESS_INPUT);
+    processor.process(MESSAGE_SUCCESS);
 
     verify(messageRepository).find(TRANSACTION_ID);
     verify(messageRepository, never()).store(any());
