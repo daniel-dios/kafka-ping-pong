@@ -1,6 +1,4 @@
-package com.kafkapingpong.repository;
-
-import com.kafkapingpong.event.Message;
+package com.kafkapingpong.event;
 
 import java.time.Duration;
 

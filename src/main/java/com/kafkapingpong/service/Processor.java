@@ -1,8 +1,8 @@
 package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
-import com.kafkapingpong.repository.MessageRepository;
-import com.kafkapingpong.repository.PongRepository;
+import com.kafkapingpong.event.MessageRepository;
+import com.kafkapingpong.event.PongRepository;
 
 import java.util.ArrayList;
 import java.util.List;

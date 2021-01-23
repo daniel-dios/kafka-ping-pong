@@ -1,4 +1,4 @@
-package com.kafkapingpong.repository;
+package com.kafkapingpong.event;
 
 import com.kafkapingpong.event.Message;
 
