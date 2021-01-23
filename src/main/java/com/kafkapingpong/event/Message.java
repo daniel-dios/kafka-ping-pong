@@ -4,11 +4,11 @@ import java.util.UUID;
 
 public class Message {
   private final UUID transactionId;
-  private final boolean error;
+  private final Payload payload;
 
-  public Message(UUID transactionId, boolean error) {
+  public Message(UUID transactionId, Payload payload) {
     this.transactionId = transactionId;
-    this.error = error;
+    this.payload = payload;
   }
 
   public UUID getTransactionId() {
@@ -16,7 +16,11 @@ public class Message {
   }
 
   public boolean isError() {
-    return error;
+    return payload.isForceError();
+  }
+
+  public String getMessage() {
+    return payload.getMessage();
   }
 
   @Override
@@ -30,24 +34,16 @@ public class Message {
 
     Message message = (Message) o;
 
-    if (error != message.error) {
+    if (!transactionId.equals(message.transactionId)) {
       return false;
     }
-    return transactionId.equals(message.transactionId);
+    return payload.equals(message.payload);
   }
 
   @Override
   public int hashCode() {
     int result = transactionId.hashCode();
-    result = 31 * result + (error ? 1 : 0);
+    result = 31 * result + payload.hashCode();
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return "Message{" +
-        "transactionId=" + transactionId +
-        ", error=" + error +
-        '}';
   }
 }

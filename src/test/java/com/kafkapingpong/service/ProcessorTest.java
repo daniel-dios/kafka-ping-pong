@@ -2,6 +2,7 @@ package com.kafkapingpong.service;
 
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.MessageRepository;
+import com.kafkapingpong.event.Payload;
 import com.kafkapingpong.event.PongRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,8 @@ import static org.mockito.Mockito.when;
 
 class ProcessorTest {
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
-  private static final Message SUCCESS = new Message(TRANSACTION_ID, false);
-  private static final Message ERROR = new Message(TRANSACTION_ID, true);
+  private static final Message SUCCESS = new Message(TRANSACTION_ID, new Payload("ping", false));
+  private static final Message ERROR = new Message(TRANSACTION_ID, new Payload("ping", true));
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(ERROR, ERROR, ERROR);
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
 
