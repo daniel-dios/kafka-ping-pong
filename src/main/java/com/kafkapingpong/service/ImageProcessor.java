@@ -1,10 +1,11 @@
 package com.kafkapingpong.service;
 
 import java.time.Duration;
+import java.util.Random;
 import java.util.UUID;
 
 public class ImageProcessor {
   public Duration compute(UUID transactionId) {
-    throw new UnsupportedOperationException();
+    return Duration.ofSeconds(30).plusSeconds(new Random().nextInt(30));
   }
 }
