@@ -2,6 +2,7 @@ package com.kafkapingpong.framework.repository;
 
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.MessageRepository;
+import com.kafkapingpong.event.Payload;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -18,7 +19,17 @@ public class MessageJDBCRepository implements MessageRepository {
 
   @Override
   public List<Message> find(UUID transactionId) {
-    throw new UnsupportedOperationException("not implemented yet ;)");
+    return jdbcTemplate.query(
+        "SELECT transaction_id, message, error FROM messages WHERE transaction_id = :transactionId",
+        new MapSqlParameterSource("transactionId", transactionId),
+        (rs, rw) ->
+            new Message(
+                rs.getObject("transaction_id", UUID.class),
+                new Payload(
+                    rs.getString("message"),
+                    rs.getBoolean("error")
+                ))
+    );
   }
 
   @Override

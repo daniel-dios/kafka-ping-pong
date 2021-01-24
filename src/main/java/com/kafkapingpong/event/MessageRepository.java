@@ -1,7 +1,5 @@
 package com.kafkapingpong.event;
 
-import com.kafkapingpong.event.Message;
-
 import java.util.List;
 import java.util.UUID;
 

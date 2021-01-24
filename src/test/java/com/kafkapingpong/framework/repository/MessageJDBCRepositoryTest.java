@@ -57,4 +57,22 @@ class MessageJDBCRepositoryTest {
 
     assertThat(helper.getMessages()).containsExactly(expectedMessage);
   }
+
+  @Test
+  void shouldGetMessagesByInsertionOrder() {
+    final var transactionId = UUID.randomUUID();
+    final var expectedMessage = new Message(transactionId, new Payload("whateverMessage", false));
+    final var lastMessage = new Message(transactionId, new Payload("whateverMessage", true));
+    repository.store(expectedMessage);
+    repository.store(expectedMessage);
+    repository.store(expectedMessage);
+    repository.store(expectedMessage);
+    repository.store(new Message(UUID.randomUUID(), new Payload("whateverMessage", false)));
+    repository.store(lastMessage);
+
+    final var messages = repository.find(transactionId);
+
+    assertThat(messages).hasSize(5);
+    assertThat(messages.get(4)).isEqualTo(lastMessage);
+  }
 }
