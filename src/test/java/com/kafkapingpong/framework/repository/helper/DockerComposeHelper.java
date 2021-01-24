@@ -1,4 +1,4 @@
-package com.kafkapingpong.framework.repository;
+package com.kafkapingpong.framework.repository.helper;
 
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;

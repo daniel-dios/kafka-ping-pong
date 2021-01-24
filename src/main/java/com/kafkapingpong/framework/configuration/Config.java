@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 public class Config {
 
   @Bean
-  public MessageRepository messageRepository(NamedParameterJdbcTemplate jdbcTemplate){
+  public MessageRepository messageRepository(NamedParameterJdbcTemplate jdbcTemplate) {
     return new MessageJDBCRepository(jdbcTemplate);
   }
 }
