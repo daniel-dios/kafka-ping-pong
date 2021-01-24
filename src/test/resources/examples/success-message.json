@@ -1,0 +1,7 @@
+{
+  "transaction-id": "9981f951-3ed7-46b7-8a23-86a87d9ffdaa",
+  "payload": {
+    "message": "ping",
+    "force_error": false
+  }
+}
