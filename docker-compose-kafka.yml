@@ -2,15 +2,6 @@ version: "3.4"
 
 services:
 
-  postgres:
-    image: postgres:12.4
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "mysecretpassword"
-      POSTGRES_DB: "postgres"
-
   kafka:
     image: wurstmeister/kafka:2.12-2.5.0
     environment:

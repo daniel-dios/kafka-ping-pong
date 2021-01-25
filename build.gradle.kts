@@ -33,6 +33,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:1.15.1")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.cloud:spring-cloud-stream-binder-test:3.1.0")
+    testImplementation("org.awaitility:awaitility:3.0.0")
 }
 
 group "com.kafka-ping-pong"
