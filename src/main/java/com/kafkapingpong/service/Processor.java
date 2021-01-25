@@ -57,12 +57,12 @@ public class Processor {
       return false;
     }
     var consecutiveAttempts = 0;
-    for (int i = compact.size() - 1; i != 0; i--) {
-      if (compact.get(i).isError()) {
+    for (Message message : compact) {
+      if (message.isError()) {
         consecutiveAttempts++;
-      }
-      if (consecutiveAttempts >= maxAttempts - 1) {
-        return true;
+        if (consecutiveAttempts >= maxAttempts) {
+          return true;
+        }
       }
     }
     return false;
@@ -72,7 +72,7 @@ public class Processor {
     if (compact.isEmpty()) {
       return false;
     }
-    return !compact.get(compact.size() - 1).isError();
+    return !compact.get(0).isError();
   }
 
   private List<Message> compact(List<Message> messages) {

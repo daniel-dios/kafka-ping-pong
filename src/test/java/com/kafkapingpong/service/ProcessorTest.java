@@ -27,6 +27,7 @@ class ProcessorTest {
   private static final UUID TRANSACTION_ID = java.util.UUID.randomUUID();
   private static final Message SUCCESS = new Message(TRANSACTION_ID, new Payload("ping", false));
   private static final Message ERROR = new Message(TRANSACTION_ID, new Payload("ping", true));
+  private static final int MAX_ATTEMPTS = 4;
   private static final List<Message> LIST_OF_THREE_ERRORS = List.of(ERROR, ERROR, ERROR);
   private static final Duration DURATION_FOR_COMPUTE_IMAGE = Duration.ofSeconds(30);
 
@@ -40,7 +41,7 @@ class ProcessorTest {
     messageRepository = mock(MessageRepository.class);
     imageProcessor = mock(ImageProcessor.class);
     pongRepository = mock(PongRepository.class);
-    processor = new Processor(messageRepository, imageProcessor, pongRepository, 4);
+    processor = new Processor(messageRepository, imageProcessor, pongRepository, MAX_ATTEMPTS);
   }
 
   @ParameterizedTest
@@ -103,7 +104,7 @@ class ProcessorTest {
     return Stream.of(
         Arguments.of(List.of()),
         Arguments.of(List.of(SUCCESS)),
-        Arguments.of(List.of(ERROR, ERROR, ERROR, SUCCESS))
+        Arguments.of(List.of(SUCCESS, ERROR, ERROR, ERROR))
     );
   }
 
@@ -136,7 +137,7 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndNotComputeImageOnSuccessInputWhenPreviousErrorsAndLastSuccess() {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(ERROR, ERROR, ERROR, SUCCESS));
+    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(SUCCESS, ERROR, ERROR, ERROR));
 
     processor.process(SUCCESS);
 

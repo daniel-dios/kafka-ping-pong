@@ -16,6 +16,7 @@ public class MessageJDBCRepository implements MessageRepository {
           SELECT transaction_id, message, error 
           FROM messages 
           WHERE transaction_id = :transactionId
+          ORDER BY id DESC
           """;
   private static final String INSERT_INTO_MESSAGES_TRANSACTION_ID_MESSAGE_ERROR_VALUES_TRANSACTION_ID_MESSAGE_ERROR =
       """

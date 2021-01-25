@@ -62,7 +62,7 @@ class MessageJDBCRepositoryTest {
   }
 
   @Test
-  void shouldGetMessagesByInsertionOrder() {
+  void shouldGetMessagesFirstInLastOut() {
     final var transactionId = UUID.randomUUID();
     final var expectedMessage = new Message(transactionId, new Payload("whateverMessage", false));
     final var lastMessage = new Message(transactionId, new Payload("whateverMessage", true));
@@ -76,6 +76,10 @@ class MessageJDBCRepositoryTest {
     final var messages = repository.find(transactionId);
 
     assertThat(messages).hasSize(5);
-    assertThat(messages.get(4)).isEqualTo(lastMessage);
+    assertThat(messages.get(0)).isEqualTo(lastMessage);
+    assertThat(messages.get(1)).isEqualTo(expectedMessage);
+    assertThat(messages.get(2)).isEqualTo(expectedMessage);
+    assertThat(messages.get(3)).isEqualTo(expectedMessage);
+    assertThat(messages.get(4)).isEqualTo(expectedMessage);
   }
 }
