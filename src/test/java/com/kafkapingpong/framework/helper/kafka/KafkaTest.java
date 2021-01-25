@@ -34,10 +34,10 @@ class KafkaTest {
 
   @Test
   void shouldConsumeMessage() throws Exception {
-    final var kafkaConsumerHelper = new KafkaConsumerHelper(LOCALHOST, PORT, TOPIC);
+    final var kafkaConsumerHelper = new KafkaConsumerHelper(TOPIC);
     kafkaConsumerHelper.consumeAll();
 
-    new KafkaProducerHelper(LOCALHOST, PORT).send(TOPIC, MESSAGE_CONTENT);
+    new KafkaProducerHelper().send(TOPIC, MESSAGE_CONTENT);
     final var records = kafkaConsumerHelper.consumeAtLeast(1, Duration.ofSeconds(1));
     final var all = records.findAll();
 

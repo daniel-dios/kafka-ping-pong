@@ -5,6 +5,7 @@ import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import java.io.File;
 
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.KAFKA_PORT;
 import static java.lang.String.valueOf;
 import static java.lang.System.setProperty;
 import static org.testcontainers.containers.wait.strategy.Wait.forListeningPort;
@@ -16,7 +17,6 @@ public class DockerComposeHelper {
   private static final int POSTGRES_PORT = 5432;
 
   private static final String KAFKA = "kafka";
-  private static final int KAFKA_PORT = 9092;
 
   private static final String ZOOKEEPER = "zookeeper";
   private static final int ZOOKEEPER_PORT = 2181;

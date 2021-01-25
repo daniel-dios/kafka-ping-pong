@@ -49,7 +49,7 @@ public class MessageConsumerIntegrationTest {
 
   @Test
   void shouldConsumeMessage() throws Exception {
-    final var kafkaProducerHelper = new KafkaProducerHelper("localhost", 9094);
+    final var kafkaProducerHelper = new KafkaProducerHelper();
     final var databaseHelper = new DatabaseHelper(jdbcTemplate);
     databaseHelper.clean();
 

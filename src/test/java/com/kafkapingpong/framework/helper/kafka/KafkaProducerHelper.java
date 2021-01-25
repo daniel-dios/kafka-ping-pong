@@ -8,15 +8,18 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.HashMap;
 
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.KAFKA_HOST;
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.KAFKA_PORT;
+
 public class KafkaProducerHelper {
 
   private final Producer<String, String> producer;
 
-  public KafkaProducerHelper(String host, int port) {
+  public KafkaProducerHelper() {
     final var config = new HashMap<String, Object>();
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, host + ":" + port);
+    config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_HOST + ":" + KAFKA_PORT);
     producer = new KafkaProducer<>(config);
   }
 

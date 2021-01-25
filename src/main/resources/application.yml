@@ -15,7 +15,7 @@ spring:
           consumer:
             partitioned: true
             maxAttempts: 1
-          group: example
+          group: kafkapingpong
           destination: ping
     function:
       definition: messageConsumer
