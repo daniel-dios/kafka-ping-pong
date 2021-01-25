@@ -32,7 +32,7 @@ public class MessageJDBCRepository implements MessageRepository {
   }
 
   @Override
-  public List<Message> find(UUID transactionId, int numberOfMessages) {
+  public List<Message> getLast(UUID transactionId, int numberOfMessages) {
     final var paramSource = new MapSqlParameterSource("transactionId", transactionId);
     paramSource.addValue("limit", numberOfMessages);
 

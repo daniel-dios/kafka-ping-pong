@@ -4,7 +4,6 @@ import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.MessageRepository;
 import com.kafkapingpong.event.PongRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.System.currentTimeMillis;
@@ -30,7 +29,7 @@ public class Processor {
 
   public void process(Message message) {
     var beginning = currentTimeMillis();
-    final var messages = messageRepository.find(message.getTransactionId(), maxAttempts);
+    final var messages = messageRepository.getLast(message.getTransactionId(), maxAttempts);
 
     if (message.isError() && !exhaustedAttempts(messages)) {
       messageRepository.store(message);
