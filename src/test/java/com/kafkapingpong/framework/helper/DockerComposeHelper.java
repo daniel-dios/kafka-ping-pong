@@ -1,4 +1,4 @@
-package com.kafkapingpong.framework.repository.helper;
+package com.kafkapingpong.framework.helper;
 
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
@@ -18,7 +18,7 @@ public class DockerComposeHelper {
   private final DockerComposeContainer container;
 
   public DockerComposeHelper() {
-    container = new DockerComposeContainer(new File("docker-compose-db.yml"))
+    container = new DockerComposeContainer(new File("docker-compose.yml"))
         .withLocalCompose(true)
         .withExposedService(POSTGRES, POSTGRES_PORT)
         .waitingFor(POSTGRES, new WaitAllStrategy(WITH_INDIVIDUAL_TIMEOUTS_ONLY)

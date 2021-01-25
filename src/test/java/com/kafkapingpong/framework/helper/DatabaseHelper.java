@@ -1,4 +1,4 @@
-package com.kafkapingpong.framework.repository.helper;
+package com.kafkapingpong.framework.helper;
 
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.Payload;
