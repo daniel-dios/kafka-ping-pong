@@ -67,7 +67,7 @@ public class MessageConsumerIntegrationTest {
   }
 
   @Test
-  void shouldLogErrorMessageAndRetryNonFatalException() throws Exception {
+  void shouldRetryWhenDbExceptionForever() throws Exception {
     doThrow(new DbException())
         .doThrow(new DbException())
         .doThrow(new DbException())
@@ -78,5 +78,19 @@ public class MessageConsumerIntegrationTest {
     KAFKA_PRODUCER_HELPER.send(TOPIC, new String(SUCCESS_MESSAGE, UTF_8));
 
     verify(processor, timeout(10000).atLeast(4)).process(message);
+  }
+
+  @Test
+  void shouldRetryOnceWhenDifferentException() throws Exception {
+    doThrow(new IllegalArgumentException())
+        .doThrow(new IllegalArgumentException())
+        .doThrow(new IllegalArgumentException())
+        .doNothing()
+        .when(processor)
+        .process(message);
+
+    KAFKA_PRODUCER_HELPER.send(TOPIC, new String(SUCCESS_MESSAGE, UTF_8));
+
+    verify(processor, timeout(10000).times(1)).process(message);
   }
 }
