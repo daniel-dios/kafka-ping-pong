@@ -1,4 +1,3 @@
-import Build_gradle.Versions.Companion.springVersion
 import org.gradle.api.JavaVersion.VERSION_15
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 
@@ -8,25 +7,32 @@ plugins {
     java
 }
 
-abstract class Versions : Plugin<Gradle> {
-    companion object {
-        const val springVersion = "2.4.1"
+dependencyManagement{
+    imports{
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2020.0.0")
     }
 }
 
 dependencies {
+    // db
     implementation("org.postgresql:postgresql:42.2.18")
     implementation("org.flywaydb:flyway-core:7.5.0")
     implementation("org.springframework:spring-jdbc:5.3.3")
-    implementation("io.springfox:springfox-swagger2:3.0.0")
-    implementation("io.springfox:springfox-swagger-ui:3.0.0")
-    implementation("org.springframework.boot:spring-boot-starter-web:${springVersion}")
-    implementation("org.springframework.boot:spring-boot-autoconfigure:${springVersion}")
-    implementation("org.springframework.boot:spring-boot-starter-actuator:${springVersion}")
-    implementation("org.springframework.boot:spring-boot-starter-jdbc:${springVersion}")
 
+    // cloud
+    implementation("org.springframework.cloud:spring-cloud-stream")
+    implementation("org.springframework.cloud:spring-cloud-starter-stream-kafka")
+
+    // spring boot
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-autoconfigure")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+
+    // tests
     testImplementation("org.testcontainers:testcontainers:1.15.1")
-    testImplementation("org.springframework.boot:spring-boot-starter-test:${springVersion}")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.cloud:spring-cloud-stream-binder-test:3.1.0")
 }
 
 group "com.kafka-ping-pong"

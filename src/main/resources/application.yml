@@ -4,6 +4,20 @@ spring:
     username: postgres
     password: mysecretpassword
     driver-class-name: org.postgresql.Driver
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: "localhost:9094"
+      bindings:
+        messageConsumer-in-0:
+          consumer:
+            partitioned: true
+            maxAttempts: 1
+          group: example
+          destination: ping
+    function:
+      definition: messageConsumer
 
 server:
   port: 8000
