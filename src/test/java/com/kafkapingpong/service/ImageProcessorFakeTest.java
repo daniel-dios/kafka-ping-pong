@@ -14,7 +14,6 @@ class ImageProcessorFakeTest {
   @RepeatedTest(100)
   void shouldReturnGreaterThan30Seconds() {
     final var compute = imageProcessorFake.compute(randomUUID());
-    System.out.println(compute.minus(Duration.ofSeconds(30)).getSeconds());
 
     assertThat(compute).isBetween(Duration.ofSeconds(30), Duration.ofMinutes(1));
   }
