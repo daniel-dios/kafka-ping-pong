@@ -30,21 +30,21 @@ public class Processor {
 
   public void process(Message message) {
     var beginning = currentTimeMillis();
-    final var compact = compact(messageRepository.find(message.getTransactionId()));
+    final var messages = messageRepository.find(message.getTransactionId(), maxAttempts);
 
-    if (message.isError() && !exhaustedAttempts(compact)) {
+    if (message.isError() && !exhaustedAttempts(messages)) {
       messageRepository.store(message);
       pongRepository.pongForError(message);
       return;
     }
 
-    if (message.isError() && exhaustedAttempts(compact)) {
+    if (message.isError() && exhaustedAttempts(messages)) {
       messageRepository.store(message);
       pongRepository.dlq(message);
       return;
     }
 
-    if (!lastMessageWasSuccess(compact)) {
+    if (!lastMessageWasSuccess(messages)) {
       beginning -= imageProcessor.compute(message.getTransactionId()).toMillis();
       messageRepository.store(message);
     }
@@ -73,15 +73,5 @@ public class Processor {
       return false;
     }
     return !compact.get(0).isError();
-  }
-
-  private List<Message> compact(List<Message> messages) {
-    final var ret = new ArrayList<Message>();
-    for (int i = 0; i < messages.size(); i++) {
-      if (i >= messages.size() - maxAttempts) {
-        ret.add(messages.get(i));
-      }
-    }
-    return ret;
   }
 }

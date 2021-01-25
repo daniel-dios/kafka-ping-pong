@@ -73,13 +73,12 @@ class MessageJDBCRepositoryTest {
     repository.store(new Message(UUID.randomUUID(), new Payload("whateverMessage", false)));
     repository.store(lastMessage);
 
-    final var messages = repository.find(transactionId);
+    final var messages = repository.find(transactionId, 4);
 
-    assertThat(messages).hasSize(5);
+    assertThat(messages).hasSize(4);
     assertThat(messages.get(0)).isEqualTo(lastMessage);
     assertThat(messages.get(1)).isEqualTo(expectedMessage);
     assertThat(messages.get(2)).isEqualTo(expectedMessage);
     assertThat(messages.get(3)).isEqualTo(expectedMessage);
-    assertThat(messages.get(4)).isEqualTo(expectedMessage);
   }
 }

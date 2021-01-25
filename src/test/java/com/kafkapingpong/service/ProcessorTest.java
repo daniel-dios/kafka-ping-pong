@@ -47,7 +47,7 @@ class ProcessorTest {
   @ParameterizedTest
   @MethodSource("getErrors")
   void shouldComputeSuccessMessage(List<Message> errorList) {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(errorList);
+    when(messageRepository.find(TRANSACTION_ID, MAX_ATTEMPTS)).thenReturn(errorList);
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(SUCCESS);
@@ -66,7 +66,7 @@ class ProcessorTest {
 
   @Test
   void shouldComputeSuccessMessageWhenPreviousErrorWithSuccessBefore() {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(ERROR, ERROR, SUCCESS, ERROR));
+    when(messageRepository.find(TRANSACTION_ID, MAX_ATTEMPTS)).thenReturn(List.of(ERROR, ERROR, SUCCESS, ERROR));
     when(imageProcessor.compute(TRANSACTION_ID)).thenReturn(DURATION_FOR_COMPUTE_IMAGE);
 
     processor.process(SUCCESS);
@@ -78,7 +78,7 @@ class ProcessorTest {
 
   @Test
   void shouldComputeSuccessMessageAndNotComputeImageWhenPreviousMessageWasConsumedWithNoError() {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(SUCCESS));
+    when(messageRepository.find(TRANSACTION_ID, MAX_ATTEMPTS)).thenReturn(List.of(SUCCESS));
 
     processor.process(SUCCESS);
 
@@ -90,7 +90,7 @@ class ProcessorTest {
   @ParameterizedTest
   @MethodSource("getSuccessStatus")
   void shouldComputeErrorMessageWithPreviousSuccess(List<Message> value) {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(value);
+    when(messageRepository.find(TRANSACTION_ID, MAX_ATTEMPTS)).thenReturn(value);
 
     processor.process(ERROR);
 
@@ -110,11 +110,11 @@ class ProcessorTest {
 
   @Test
   void shouldComputeErrorMessageWhenReattemptsLowerThanMaximum() {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
+    when(messageRepository.find(TRANSACTION_ID, MAX_ATTEMPTS)).thenReturn(LIST_OF_THREE_ERRORS);
 
     processor.process(ERROR);
 
-    verify(messageRepository).find(TRANSACTION_ID);
+    verify(messageRepository).find(TRANSACTION_ID, MAX_ATTEMPTS);
     verify(messageRepository).store(same(ERROR));
     verify(pongRepository).pongForError(same(ERROR));
     verify(pongRepository, never()).pong(any(), any());
@@ -123,7 +123,7 @@ class ProcessorTest {
 
   @Test
   void shouldNotComputeErrorMessageWhenReattemptsGreaterThanMaximum() {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(LIST_OF_THREE_ERRORS);
+    when(messageRepository.find(TRANSACTION_ID, 3)).thenReturn(LIST_OF_THREE_ERRORS);
     final var processor = new Processor(messageRepository, imageProcessor, pongRepository, 3);
 
     processor.process(ERROR);
@@ -137,11 +137,11 @@ class ProcessorTest {
 
   @Test
   void shouldProcessMessageAndNotComputeImageOnSuccessInputWhenPreviousErrorsAndLastSuccess() {
-    when(messageRepository.find(TRANSACTION_ID)).thenReturn(List.of(SUCCESS, ERROR, ERROR, ERROR));
+    when(messageRepository.find(TRANSACTION_ID, MAX_ATTEMPTS)).thenReturn(List.of(SUCCESS, ERROR, ERROR, ERROR));
 
     processor.process(SUCCESS);
 
-    verify(messageRepository).find(TRANSACTION_ID);
+    verify(messageRepository).find(TRANSACTION_ID, MAX_ATTEMPTS);
     verify(messageRepository, never()).store(any());
     verify(imageProcessor, never()).compute(any());
     verify(pongRepository).pong(same(SUCCESS), any());

@@ -17,6 +17,7 @@ public class MessageJDBCRepository implements MessageRepository {
           FROM messages 
           WHERE transaction_id = :transactionId
           ORDER BY id DESC
+          LIMIT :limit
           """;
   private static final String INSERT_INTO_MESSAGES_TRANSACTION_ID_MESSAGE_ERROR_VALUES_TRANSACTION_ID_MESSAGE_ERROR =
       """
@@ -31,10 +32,13 @@ public class MessageJDBCRepository implements MessageRepository {
   }
 
   @Override
-  public List<Message> find(UUID transactionId) {
+  public List<Message> find(UUID transactionId, int numberOfMessages) {
+    final var paramSource = new MapSqlParameterSource("transactionId", transactionId);
+    paramSource.addValue("limit", numberOfMessages);
+
     return jdbcTemplate.query(
         SELECT_TRANSACTION_ID_MESSAGE_ERROR_FROM_MESSAGES_WHERE_TRANSACTION_ID_TRANSACTION_ID,
-        new MapSqlParameterSource("transactionId", transactionId),
+        paramSource,
         (rs, rw) ->
             new Message(
                 rs.getObject("transaction_id", UUID.class),
