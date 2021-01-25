@@ -19,7 +19,8 @@ class KafkaTest {
   private static final String LOCALHOST = "localhost";
   private static final int PORT = 9094;
   private static final String TOPIC = "ping";
-  private static final DockerComposeHelper dockerComposeHelper = new DockerComposeHelper(DockerComposeHelper.Compose.KAFKA);
+  private static final DockerComposeHelper dockerComposeHelper =
+      new DockerComposeHelper(DockerComposeHelper.Compose.KAFKA);
 
   @BeforeAll
   static void beforeAll() {

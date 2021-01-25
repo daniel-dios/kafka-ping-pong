@@ -5,11 +5,8 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class KafkaProducerHelper {
 

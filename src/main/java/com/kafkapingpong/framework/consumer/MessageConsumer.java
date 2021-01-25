@@ -7,7 +7,7 @@ import com.kafkapingpong.service.Processor;
 
 import java.util.function.Consumer;
 
-public class MessageConsumer {
+public class MessageConsumer implements Consumer<MessageIn> {
 
   private final Processor processor;
 
@@ -15,6 +15,7 @@ public class MessageConsumer {
     this.processor = processor;
   }
 
+  @Override
   public void accept(MessageIn messageIn) {
     processor.process(new Message(messageIn.id, new Payload(messageIn.payload.message, messageIn.payload.forceError)));
   }

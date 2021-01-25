@@ -19,7 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.UUID;
 
-import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.*;
+import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
@@ -33,7 +33,7 @@ class MessageJDBCRepositoryTest {
   private MessageRepository repository;
   private DatabaseHelper helper;
 
-  private static final DockerComposeHelper dockerCompose = new DockerComposeHelper(POSTGRES);
+  private static final DockerComposeHelper dockerCompose = new DockerComposeHelper(BOTH);
 
   @BeforeAll
   static void dockerComposeUp() {
