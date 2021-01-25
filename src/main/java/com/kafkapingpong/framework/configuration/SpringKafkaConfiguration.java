@@ -17,12 +17,12 @@ public class SpringKafkaConfiguration {
   @Bean
   public ListenerContainerCustomizer<AbstractMessageListenerContainer> containerCustomizer() {
     return (container, dest, group) -> {
-      final var backOff = new ExponentialBackOff(50, 5);
-      final var errorHandler = new SeekToCurrentErrorHandler(null, backOff);
+      final var errorHandler = new SeekToCurrentErrorHandler(null, new ExponentialBackOff(50, 5));
       errorHandler.setClassifications(Map.of(DbException.class, true), false);
-      var props = container.getContainerProperties();
-      props.setAckMode(ContainerProperties.AckMode.RECORD);
       container.setErrorHandler(errorHandler);
+
+      final var props = container.getContainerProperties();
+      props.setAckMode(ContainerProperties.AckMode.RECORD);
     };
   }
 }
