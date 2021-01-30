@@ -4,7 +4,6 @@ import com.kafkapingpong.event.MessageRepository;
 import com.kafkapingpong.event.PongRepository;
 import com.kafkapingpong.framework.consumer.MessageConsumer;
 import com.kafkapingpong.framework.repository.MessageJDBCRepository;
-import com.kafkapingpong.framework.repository.VoidPongRepository;
 import com.kafkapingpong.service.ImageProcessor;
 import com.kafkapingpong.service.ImageProcessorFake;
 import com.kafkapingpong.service.Processor;
@@ -38,10 +37,5 @@ public class Config {
   public MessageRepository messageRepository(
       NamedParameterJdbcTemplate jdbcTemplate) {
     return new MessageJDBCRepository(jdbcTemplate);
-  }
-
-  @Bean
-  public PongRepository pongRepository() {
-    return new VoidPongRepository();
   }
 }

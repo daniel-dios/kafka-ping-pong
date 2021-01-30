@@ -17,6 +17,15 @@ spring:
             maxAttempts: 1
           group: kafkapingpong
           destination: ping
+        pong:
+          producer:
+            partitionKeyExpression: headers['partitionKey']
+            partitionCount: 1
+            bufferSize: 1000000
+            headerMode: none
+            batchTimeout: 3
+          destination: pong
+          content-type: application/json
     function:
       definition: messageConsumer
 
