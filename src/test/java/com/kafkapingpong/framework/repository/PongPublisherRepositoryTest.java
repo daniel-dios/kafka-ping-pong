@@ -25,7 +25,9 @@ import java.time.Duration;
 import java.util.UUID;
 
 import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
-import static java.util.List.of;
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.DLQ;
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_ERROR;
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
@@ -45,10 +47,7 @@ public class PongPublisherRepositoryTest {
   private static final PayloadError PAYLOAD_ERROR = new PayloadError("ping", true);
   private static final MessageOut EXPECTED_PONG_ERROR = new MessageOut(transactionId.toString(), PAYLOAD_ERROR);
 
-  private final String PONG_TOPIC = "pong";
-  private final String PONG_ERROR = "pong-error";
-  private final String DLQ = "dlq";
-  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper(of(PONG_TOPIC, PONG_ERROR, DLQ));
+  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper();
 
   @BeforeAll
   static void beforeAll() {

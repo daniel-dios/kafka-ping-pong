@@ -18,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.Collections;
 import java.util.UUID;
 
 import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
@@ -39,8 +38,7 @@ public class MessageConsumerIntegrationTest {
   private static final DockerComposeHelper DOCKER_COMPOSE_HELPER = new DockerComposeHelper(BOTH);
   private static final KafkaProducerHelper KAFKA_PRODUCER_HELPER = new KafkaProducerHelper();
   private static final String TOPIC = "ping";
-  private static final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper(
-      Collections.singletonList(TOPIC));
+  private static final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper();
   private static final byte[] SUCCESS_MESSAGE = resourceToBytes("classpath:/examples/success-message.json");
   private static final UUID transactionId = UUID.fromString("9981f951-3ed7-46b7-8a23-86a87d9ffdaa");
   private static final Message message = new Message(transactionId, new Payload(TOPIC, false));

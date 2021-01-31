@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.KAFKA_HOST;
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.KAFKA_PORT;
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.TOPICS;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofSeconds;
 import static org.apache.kafka.clients.consumer.OffsetResetStrategy.EARLIEST;
@@ -24,9 +25,9 @@ public class KafkaConsumerHelper {
 
   private final Consumer<String, String> consumer;
 
-  public KafkaConsumerHelper(List<String> topics) {
+  public KafkaConsumerHelper() {
     consumer = new KafkaConsumer<>(consumerConfig());
-    consumer.subscribe(topics);
+    consumer.subscribe(TOPICS);
   }
 
   public void consumeAll() {

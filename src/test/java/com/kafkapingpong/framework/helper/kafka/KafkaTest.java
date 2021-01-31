@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,7 +20,7 @@ class KafkaTest {
   void shouldConsumeMessage() throws Exception {
     final var dockerComposeHelper = new DockerComposeHelper(DockerComposeHelper.Compose.KAFKA);
     dockerComposeHelper.start();
-    final var kafkaConsumerHelper = new KafkaConsumerHelper(Collections.singletonList(TOPIC));
+    final var kafkaConsumerHelper = new KafkaConsumerHelper();
     kafkaConsumerHelper.consumeAll();
 
     new KafkaProducerHelper().send(TOPIC, MESSAGE_CONTENT);
