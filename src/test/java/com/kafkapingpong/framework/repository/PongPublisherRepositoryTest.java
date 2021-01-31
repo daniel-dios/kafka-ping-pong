@@ -8,8 +8,9 @@ import com.kafkapingpong.event.PongRepository;
 import com.kafkapingpong.framework.Application;
 import com.kafkapingpong.framework.helper.DockerComposeHelper;
 import com.kafkapingpong.framework.helper.kafka.KafkaConsumerHelper;
-import com.kafkapingpong.framework.repository.dto.error.PongError;
-import com.kafkapingpong.framework.repository.dto.success.PongSuccess;
+import com.kafkapingpong.framework.repository.dto.MessageOut;
+import com.kafkapingpong.framework.repository.dto.PayloadError;
+import com.kafkapingpong.framework.repository.dto.PayloadSuccess;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,17 +38,18 @@ public class PongPublisherRepositoryTest {
   private static final Duration DURATION = Duration.ofSeconds(31);
 
   private static final Message message = new Message(transactionId, new Payload("ping", false));
-  private static final PongSuccess EXPECTED_PONG_SUCCESS = new PongSuccess(transactionId.toString(),
-      new com.kafkapingpong.framework.repository.dto.success.Payload("pong", DURATION.toMillis()));
+  private static final PayloadSuccess PAYLOAD_SUCCESS = new PayloadSuccess("pong", DURATION.toMillis());
+  private static final MessageOut EXPECTED_PONG_SUCCESS = new MessageOut(transactionId.toString(), PAYLOAD_SUCCESS);
 
   private static final Message errorMessage = new Message(transactionId, new Payload("ping", true));
-  private static final PongError EXPECTED_PONG_ERROR = new PongError(transactionId.toString(),
-      new com.kafkapingpong.framework.repository.dto.error.Payload("ping", true));
+  private static final PayloadError PAYLOAD_ERROR = new PayloadError("ping", true);
+  private static final MessageOut EXPECTED_PONG_ERROR = new MessageOut(transactionId.toString(), PAYLOAD_ERROR);
 
   private final String PONG_TOPIC = "pong";
   private final String PONG_ERROR = "pong-error";
   private final String DLQ = "dlq";
-  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper(List.of(PONG_TOPIC, PONG_ERROR, DLQ));
+  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER =
+      new KafkaConsumerHelper(List.of(PONG_TOPIC, PONG_ERROR, DLQ));
 
   @BeforeAll
   static void beforeAll() {
@@ -74,8 +76,7 @@ public class PongPublisherRepositoryTest {
     final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo(PONG_TOPIC);
-    final var actual = new ObjectMapper().readValue(all.get(0).value(), PongSuccess.class);
-    assertThat(actual).usingRecursiveComparison().isEqualTo(EXPECTED_PONG_SUCCESS);
+    assertThat(all.get(0).value()).isEqualTo(new ObjectMapper().writeValueAsString(EXPECTED_PONG_SUCCESS));
   }
 
   @Test
@@ -85,8 +86,7 @@ public class PongPublisherRepositoryTest {
     final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo(PONG_ERROR);
-    final var actual = new ObjectMapper().readValue(all.get(0).value(), PongError.class);
-    assertThat(actual).usingRecursiveComparison().isEqualTo(EXPECTED_PONG_ERROR);
+    assertThat(all.get(0).value()).isEqualTo(new ObjectMapper().writeValueAsString(EXPECTED_PONG_ERROR));
   }
 
   @Test
@@ -96,7 +96,6 @@ public class PongPublisherRepositoryTest {
     final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo(DLQ);
-    final var actual = new ObjectMapper().readValue(all.get(0).value(), PongError.class);
-    assertThat(actual).usingRecursiveComparison().isEqualTo(EXPECTED_PONG_ERROR);
+    assertThat(all.get(0).value()).isEqualTo(new ObjectMapper().writeValueAsString(EXPECTED_PONG_ERROR));
   }
 }

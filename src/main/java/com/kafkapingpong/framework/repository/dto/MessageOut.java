@@ -1,18 +1,15 @@
-package com.kafkapingpong.framework.repository.dto.success;
+package com.kafkapingpong.framework.repository.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class PongSuccess {
+public class MessageOut {
   @JsonProperty("transaction-id")
-  private String transactionId;
+  private final String transactionId;
 
   @JsonProperty("payload")
-  private Payload payload;
+  private final PayloadOut payload;
 
-  public PongSuccess() {
-  }
-
-  public PongSuccess(String transactionId, Payload payload) {
+  public MessageOut(String transactionId, PayloadOut payload) {
     this.transactionId = transactionId;
     this.payload = payload;
   }
@@ -21,7 +18,7 @@ public class PongSuccess {
     return transactionId;
   }
 
-  public Payload getPayload() {
+  public PayloadOut getPayload() {
     return payload;
   }
 }

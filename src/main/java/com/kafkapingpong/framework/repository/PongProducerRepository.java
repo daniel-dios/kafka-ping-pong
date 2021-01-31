@@ -2,9 +2,9 @@ package com.kafkapingpong.framework.repository;
 
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.PongRepository;
-import com.kafkapingpong.framework.repository.dto.error.PongError;
-import com.kafkapingpong.framework.repository.dto.success.Payload;
-import com.kafkapingpong.framework.repository.dto.success.PongSuccess;
+import com.kafkapingpong.framework.repository.dto.MessageOut;
+import com.kafkapingpong.framework.repository.dto.PayloadError;
+import com.kafkapingpong.framework.repository.dto.PayloadSuccess;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 
@@ -56,14 +56,14 @@ public class PongProducerRepository implements PongRepository {
     dlqChannel.send(messageToSend);
   }
 
-  private PongSuccess mapToPongSuccess(Message message, Duration duration) {
-    return new PongSuccess(
+  private MessageOut mapToPongSuccess(Message message, Duration duration) {
+    return new MessageOut(
         message.getTransactionId().toString(),
-        new Payload("pong", duration.toMillis()));
+        new PayloadSuccess("pong", duration.toMillis()));
   }
 
-  private PongError mapToPongError(Message message) {
-    return new PongError(message.getTransactionId().toString(),
-        new com.kafkapingpong.framework.repository.dto.error.Payload("ping", message.isError()));
+  private MessageOut mapToPongError(Message message) {
+    return new MessageOut(message.getTransactionId().toString(),
+        new PayloadError("ping", message.isError()));
   }
 }
