@@ -11,23 +11,17 @@ spring:
           brokers:
             - localhost:9094
       bindings:
-        messageConsumer-in-0:
+        messageConsumer-input:
           consumer:
             partitioned: true
             maxAttempts: 1
           group: kafkapingpong
-          destination: ping
-        pong:
+          destination: "ping"
+        pong-output:
           producer:
             partitionKeyExpression: headers['partitionKey']
-            partitionCount: 1
-            bufferSize: 1000000
-            headerMode: none
-            batchTimeout: 3
-          destination: pong
+          destination: "pong"
           content-type: application/json
-    function:
-      definition: messageConsumer
 
 server:
   port: 8000

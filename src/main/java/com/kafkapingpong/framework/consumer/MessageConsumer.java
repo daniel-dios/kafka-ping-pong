@@ -4,10 +4,11 @@ import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.Payload;
 import com.kafkapingpong.framework.consumer.dto.MessageIn;
 import com.kafkapingpong.service.Processor;
+import org.springframework.cloud.stream.annotation.StreamListener;
 
-import java.util.function.Consumer;
+import static com.kafkapingpong.framework.configuration.PongChannels.PING_INPUT;
 
-public class MessageConsumer implements Consumer<MessageIn> {
+public class MessageConsumer {
 
   private final Processor processor;
 
@@ -15,8 +16,8 @@ public class MessageConsumer implements Consumer<MessageIn> {
     this.processor = processor;
   }
 
-  @Override
-  public void accept(MessageIn messageIn) {
+  @StreamListener(PING_INPUT)
+  public void consume(MessageIn messageIn) {
     processor.process(new Message(messageIn.id, new Payload(messageIn.payload.message, messageIn.payload.forceError)));
   }
 }
