@@ -9,6 +9,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 
 import java.time.Duration;
+import java.util.UUID;
 
 public class PongProducerRepository implements PongRepository {
   public static final String PARTITION_KEY = "partitionKey";
@@ -28,32 +29,26 @@ public class PongProducerRepository implements PongRepository {
 
   @Override
   public void pong(Message message, Duration duration) {
-    final var messageToSend = MessageBuilder
-        .withPayload(mapToPongSuccess(message, duration))
-        .setHeader(PARTITION_KEY, message.getTransactionId().toString())
-        .build();
-
-    pongSuccessChannel.send(messageToSend);
+    send(pongSuccessChannel, message.getTransactionId(), mapToPongSuccess(message, duration));
   }
 
   @Override
   public void pongForError(Message message) {
-    final var messageToSend = MessageBuilder
-        .withPayload(mapToPongError(message))
-        .setHeader(PARTITION_KEY, message.getTransactionId().toString())
-        .build();
-
-    pongErrorChannel.send(messageToSend);
+    send(pongErrorChannel, message.getTransactionId(), mapToPongError(message));
   }
 
   @Override
   public void dlq(Message message) {
-    final var messageToSend = MessageBuilder
-        .withPayload(mapToPongError(message))
-        .setHeader(PARTITION_KEY, message.getTransactionId().toString())
+    send(dlqChannel, message.getTransactionId(), mapToPongError(message));
+  }
+
+  private void send(MessageChannel messageChannel, UUID transactionId, MessageOut message) {
+    final var outMessage = MessageBuilder
+        .withPayload(message)
+        .setHeader(PARTITION_KEY, transactionId.toString())
         .build();
 
-    dlqChannel.send(messageToSend);
+    messageChannel.send(outMessage);
   }
 
   private MessageOut mapToPongSuccess(Message message, Duration duration) {
