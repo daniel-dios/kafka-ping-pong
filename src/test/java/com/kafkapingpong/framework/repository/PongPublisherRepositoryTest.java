@@ -22,10 +22,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.UUID;
 
 import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
+import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
@@ -48,8 +48,7 @@ public class PongPublisherRepositoryTest {
   private final String PONG_TOPIC = "pong";
   private final String PONG_ERROR = "pong-error";
   private final String DLQ = "dlq";
-  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER =
-      new KafkaConsumerHelper(List.of(PONG_TOPIC, PONG_ERROR, DLQ));
+  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper(of(PONG_TOPIC, PONG_ERROR, DLQ));
 
   @BeforeAll
   static void beforeAll() {
