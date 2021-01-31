@@ -34,6 +34,7 @@ public class SpringKafkaConfiguration {
   public PongRepository pongRepository(PongChannels channels) {
     return new PongProducerRepository(
         channels.getPongChannel(),
-        channels.getPongErrorChannel());
+        channels.getPongErrorChannel(),
+        channels.getDlqChannel());
   }
 }

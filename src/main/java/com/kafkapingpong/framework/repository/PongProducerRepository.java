@@ -15,12 +15,15 @@ public class PongProducerRepository implements PongRepository {
 
   private final MessageChannel pongSuccessChannel;
   private final MessageChannel pongErrorChannel;
+  private final MessageChannel dlqChannel;
 
   public PongProducerRepository(
       MessageChannel pongSuccessChannel,
-      MessageChannel pongErrorChannel) {
+      MessageChannel pongErrorChannel,
+      MessageChannel dlqChannel) {
     this.pongSuccessChannel = pongSuccessChannel;
     this.pongErrorChannel = pongErrorChannel;
+    this.dlqChannel = dlqChannel;
   }
 
   @Override
@@ -45,7 +48,12 @@ public class PongProducerRepository implements PongRepository {
 
   @Override
   public void dlq(Message message) {
-    throw new UnsupportedOperationException("not implemented yet");
+    final var messageToSend = MessageBuilder
+        .withPayload(mapToPongError(message))
+        .setHeader(PARTITION_KEY, message.getTransactionId().toString())
+        .build();
+
+    dlqChannel.send(messageToSend);
   }
 
   private PongSuccess mapToPongSuccess(Message message, Duration duration) {

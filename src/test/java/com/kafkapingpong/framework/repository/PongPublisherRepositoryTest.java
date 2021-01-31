@@ -46,7 +46,8 @@ public class PongPublisherRepositoryTest {
 
   private final String PONG_TOPIC = "pong";
   private final String PONG_ERROR = "pong-error";
-  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper(List.of(PONG_TOPIC, PONG_ERROR));
+  private final String DLQ = "dlq";
+  private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper(List.of(PONG_TOPIC, PONG_ERROR, DLQ));
 
   @BeforeAll
   static void beforeAll() {
@@ -84,6 +85,17 @@ public class PongPublisherRepositoryTest {
     final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo(PONG_ERROR);
+    final var actual = new ObjectMapper().readValue(all.get(0).value(), PongError.class);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(EXPECTED_PONG_ERROR);
+  }
+
+  @Test
+  void shouldProduceErrorEventToDlq() throws JsonProcessingException {
+    pongRepository.dlq(errorMessage);
+
+    final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
+    assertThat(all).hasSize(1);
+    assertThat(all.get(0).topic()).isEqualTo(DLQ);
     final var actual = new ObjectMapper().readValue(all.get(0).value(), PongError.class);
     assertThat(actual).usingRecursiveComparison().isEqualTo(EXPECTED_PONG_ERROR);
   }

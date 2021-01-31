@@ -27,6 +27,11 @@ spring:
             partitionKeyExpression: headers['partitionKey']
           destination: "pong-error"
           content-type: application/json
+        dlq-output:
+          producer:
+            partitionKeyExpression: headers['partitionKey']
+          destination: "dlq"
+          content-type: application/json
 
 server:
   port: 8000
