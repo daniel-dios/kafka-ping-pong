@@ -24,7 +24,6 @@ import java.util.UUID;
 import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
 import static com.kafkapingpong.framework.helper.FileHelper.resourceToBytes;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -59,15 +58,6 @@ public class MessageConsumerIntegrationTest {
   @BeforeEach
   void setUp() {
     KAFKA_CONSUMER_HELPER.consumeAll();
-  }
-
-  @Test
-  void shouldCallOnceToProcessor() throws Exception {
-    doNothing().when(processor).process(message);
-
-    KAFKA_PRODUCER_HELPER.send(TOPIC, new String(SUCCESS_MESSAGE, UTF_8));
-
-    verify(processor, timeout(10000).times(1)).process(message);
   }
 
   @Test
