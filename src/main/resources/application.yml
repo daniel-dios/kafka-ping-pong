@@ -22,6 +22,11 @@ spring:
             partitionKeyExpression: headers['partitionKey']
           destination: "pong"
           content-type: application/json
+        pong-error-output:
+          producer:
+            partitionKeyExpression: headers['partitionKey']
+          destination: "pong-error"
+          content-type: application/json
 
 server:
   port: 8000

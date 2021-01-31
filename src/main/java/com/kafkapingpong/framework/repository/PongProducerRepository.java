@@ -2,8 +2,9 @@ package com.kafkapingpong.framework.repository;
 
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.PongRepository;
-import com.kafkapingpong.framework.repository.dto.Payload;
-import com.kafkapingpong.framework.repository.dto.PongSuccess;
+import com.kafkapingpong.framework.repository.dto.error.PongError;
+import com.kafkapingpong.framework.repository.dto.success.Payload;
+import com.kafkapingpong.framework.repository.dto.success.PongSuccess;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 
@@ -13,9 +14,13 @@ public class PongProducerRepository implements PongRepository {
   public static final String PARTITION_KEY = "partitionKey";
 
   private final MessageChannel pongSuccessChannel;
+  private final MessageChannel pongErrorChannel;
 
-  public PongProducerRepository(MessageChannel pongSuccessChannel) {
+  public PongProducerRepository(
+      MessageChannel pongSuccessChannel,
+      MessageChannel pongErrorChannel) {
     this.pongSuccessChannel = pongSuccessChannel;
+    this.pongErrorChannel = pongErrorChannel;
   }
 
   @Override
@@ -30,7 +35,12 @@ public class PongProducerRepository implements PongRepository {
 
   @Override
   public void pongForError(Message message) {
-    throw new UnsupportedOperationException("not implemented yet");
+    final var messageToSend = MessageBuilder
+        .withPayload(mapToPongError(message))
+        .setHeader(PARTITION_KEY, message.getTransactionId().toString())
+        .build();
+
+    pongErrorChannel.send(messageToSend);
   }
 
   @Override
@@ -42,5 +52,10 @@ public class PongProducerRepository implements PongRepository {
     return new PongSuccess(
         message.getTransactionId().toString(),
         new Payload("pong", duration.toMillis()));
+  }
+
+  private PongError mapToPongError(Message message) {
+    return new PongError(message.getTransactionId().toString(),
+        new com.kafkapingpong.framework.repository.dto.error.Payload("ping", message.isError()));
   }
 }

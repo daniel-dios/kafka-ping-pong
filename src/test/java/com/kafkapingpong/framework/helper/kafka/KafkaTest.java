@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Duration;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +35,7 @@ class KafkaTest {
 
   @Test
   void shouldConsumeMessage() throws Exception {
-    final var kafkaConsumerHelper = new KafkaConsumerHelper(TOPIC);
+    final var kafkaConsumerHelper = new KafkaConsumerHelper(Collections.singletonList(TOPIC));
     kafkaConsumerHelper.consumeAll();
 
     new KafkaProducerHelper().send(TOPIC, MESSAGE_CONTENT);

@@ -9,7 +9,6 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -25,9 +24,9 @@ public class KafkaConsumerHelper {
 
   private final Consumer<String, String> consumer;
 
-  public KafkaConsumerHelper(String topic) {
+  public KafkaConsumerHelper(List<String> topics) {
     consumer = new KafkaConsumer<>(consumerConfig());
-    consumer.subscribe(Collections.singletonList(topic));
+    consumer.subscribe(topics);
   }
 
   public void consumeAll() {

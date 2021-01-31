@@ -1,13 +1,16 @@
-package com.kafkapingpong.framework.repository.dto;
+package com.kafkapingpong.framework.repository.dto.success;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Payload {
   @JsonProperty("message")
-  private final String message;
+  private String message;
 
   @JsonProperty("processing_time")
-  private final long processingTime;
+  private long processingTime;
+
+  public Payload() {
+  }
 
   public Payload(String message, long processingTime) {
     this.message = message;
