@@ -32,6 +32,9 @@ public class PongPublisherRepositoryTest {
   private static final String TOPIC = "pong";
   private static final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper(TOPIC);
   private static final UUID transactionId = UUID.randomUUID();
+  private static final String EXPECTED_JSON = format("""
+      {"transaction-id":"%s","payload":{"message":"pong","processing_time":31000}}
+      """, transactionId.toString());
   private static final Message message = new Message(transactionId, new Payload(TOPIC, false));
 
   @BeforeAll
@@ -59,15 +62,6 @@ public class PongPublisherRepositoryTest {
     final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(1, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo("pong");
-    assertThat(all.get(0).value()).isEqualTo(
-        format("""
-            {
-              "id": "%s",
-              "payload": {
-                "message": "pong",
-                "processing_time": 31
-              }
-            }
-            """, transactionId.toString()));
+    assertThat(all.get(0).value()).isEqualTo(EXPECTED_JSON);
   }
 }

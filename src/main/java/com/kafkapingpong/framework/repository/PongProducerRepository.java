@@ -2,41 +2,30 @@ package com.kafkapingpong.framework.repository;
 
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.PongRepository;
+import com.kafkapingpong.framework.repository.dto.Payload;
+import com.kafkapingpong.framework.repository.dto.PongSuccess;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 
 import java.time.Duration;
 
-import static java.lang.String.format;
-
 public class PongProducerRepository implements PongRepository {
   public static final String PARTITION_KEY = "partitionKey";
 
-  private final MessageChannel output;
+  private final MessageChannel pongSuccessChannel;
 
-  public PongProducerRepository(MessageChannel output) {
-    this.output = output;
+  public PongProducerRepository(MessageChannel pongSuccessChannel) {
+    this.pongSuccessChannel = pongSuccessChannel;
   }
 
   @Override
   public void pong(Message message, Duration duration) {
-
-    final var stringMessage = MessageBuilder
-        .withPayload(
-            format(
-                """
-                    {
-                      "id": "%s",
-                      "payload": {
-                        "message": "pong",
-                        "processing_time": %d
-                      }
-                    }
-                    """, message.getTransactionId(), duration.getSeconds()))
+    final var messageToSend = MessageBuilder
+        .withPayload(mapToPongSuccess(message, duration))
         .setHeader(PARTITION_KEY, message.getTransactionId().toString())
         .build();
 
-    output.send(stringMessage);
+    pongSuccessChannel.send(messageToSend);
   }
 
   @Override
@@ -47,5 +36,11 @@ public class PongProducerRepository implements PongRepository {
   @Override
   public void dlq(Message message) {
     throw new UnsupportedOperationException("not implemented yet");
+  }
+
+  private PongSuccess mapToPongSuccess(Message message, Duration duration) {
+    return new PongSuccess(
+        message.getTransactionId().toString(),
+        new Payload("pong", duration.toMillis()));
   }
 }
