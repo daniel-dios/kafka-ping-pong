@@ -3,23 +3,20 @@ package com.kafkapingpong.framework.consumer;
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.Payload;
 import com.kafkapingpong.framework.Application;
-import com.kafkapingpong.framework.helper.DockerComposeHelper;
 import com.kafkapingpong.framework.helper.kafka.KafkaConsumerHelper;
 import com.kafkapingpong.framework.helper.kafka.KafkaProducerHelper;
 import com.kafkapingpong.framework.repository.exception.DbException;
 import com.kafkapingpong.service.Processor;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.UUID;
 
-import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
 import static com.kafkapingpong.framework.helper.FileHelper.resourceToBytes;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Mockito.doThrow;
@@ -28,12 +25,8 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
-public class MessageConsumerIntegrationTest {
+public abstract class MessageConsumerIntegrationTestCase {
 
-  @MockBean
-  Processor processor;
-
-  private static final DockerComposeHelper DOCKER_COMPOSE_HELPER = new DockerComposeHelper(BOTH);
   private static final KafkaProducerHelper KAFKA_PRODUCER_HELPER = new KafkaProducerHelper();
   private static final String TOPIC = "ping";
   private static final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper();
@@ -41,15 +34,8 @@ public class MessageConsumerIntegrationTest {
   private static final UUID transactionId = UUID.fromString("9981f951-3ed7-46b7-8a23-86a87d9ffdaa");
   private static final Message message = new Message(transactionId, new Payload(TOPIC, false));
 
-  @BeforeAll
-  static void beforeAll() {
-    DOCKER_COMPOSE_HELPER.start();
-  }
-
-  @AfterAll
-  static void afterAll() {
-    DOCKER_COMPOSE_HELPER.stop();
-  }
+  @MockBean
+  Processor processor;
 
   @BeforeEach
   void setUp() {

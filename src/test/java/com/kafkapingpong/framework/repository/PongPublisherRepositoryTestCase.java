@@ -18,22 +18,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Duration;
 import java.util.UUID;
 
-import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.DLQ;
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_ERROR;
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
-public class PongPublisherRepositoryTest {
+public abstract class PongPublisherRepositoryTestCase {
 
-  private static final DockerComposeHelper DOCKER_COMPOSE_HELPER = new DockerComposeHelper(BOTH);
   private static final UUID transactionId = UUID.randomUUID();
   private static final Duration DURATION = Duration.ofSeconds(31);
 
@@ -46,16 +46,6 @@ public class PongPublisherRepositoryTest {
   private static final MessageOut EXPECTED_PONG_ERROR = new MessageOut(transactionId.toString(), PAYLOAD_ERROR);
 
   private final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper();
-
-  @BeforeAll
-  static void beforeAll() {
-    DOCKER_COMPOSE_HELPER.start();
-  }
-
-  @AfterAll
-  static void afterAll() {
-    DOCKER_COMPOSE_HELPER.stop();
-  }
 
   @BeforeEach
   void setUp() {

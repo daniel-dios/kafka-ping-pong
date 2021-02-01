@@ -36,11 +36,11 @@ public class KafkaConsumerHelper {
   }
 
   public void consumeAll() {
-    consumeAtLeast(1, ofSeconds(1));
+    consumeAtLeast(1, ofSeconds(10));
   }
 
   public KafkaConsumerRecords consumeAtLeast(int numberOfRecords, Duration timeout) {
-    KafkaConsumerRecords consumerRecords = new KafkaConsumerRecords();
+    final var consumerRecords = new KafkaConsumerRecords();
     long millisLeft = timeout.toMillis();
     do {
       consumerRecords.add(consumer.poll(ofMillis(MILLIS_POLL)));

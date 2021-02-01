@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.UUID;
@@ -21,27 +22,16 @@ import java.util.UUID;
 import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
-class MessageJDBCRepositoryTest {
+public abstract class MessageJDBCRepositoryTestCase {
 
   @Autowired
   private NamedParameterJdbcTemplate jdbcTemplate;
 
   private MessageRepository repository;
   private DatabaseHelper helper;
-
-  private static final DockerComposeHelper dockerCompose = new DockerComposeHelper(BOTH);
-
-  @BeforeAll
-  static void dockerComposeUp() {
-    dockerCompose.start();
-  }
-
-  @AfterAll
-  static void dockerComposeDown() {
-    dockerCompose.stop();
-  }
 
   @BeforeEach
   void setup() {

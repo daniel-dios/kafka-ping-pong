@@ -3,11 +3,13 @@ package com.kafkapingpong.framework.helper.kafka;
 import com.kafkapingpong.framework.helper.DockerComposeHelper;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DirtiesContext
 class KafkaTest {
 
   private static final String MESSAGE_CONTENT = """
