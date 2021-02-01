@@ -38,7 +38,6 @@ import static org.awaitility.Awaitility.await;
 public class ApplicationTestCase {
   private static final KafkaProducerHelper KAFKA_PRODUCER_HELPER = new KafkaProducerHelper();
   private static final String PING_TOPIC = "ping";
-  private static final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper();
   private static final byte[] SUCCESS_MESSAGE = resourceToBytes("classpath:/examples/success-message.json");
   private static final byte[] ERROR_MESSAGE = resourceToBytes("classpath:/examples/error-message.json");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -77,29 +76,14 @@ public class ApplicationTestCase {
     out.consumeAll();
     KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(SUCCESS_MESSAGE, UTF_8));
 
-    await().atMost(10, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              final var all = out.consumeAtLeast(1, Duration.ofSeconds(5)).findAll();
-              return !all.isEmpty() && successAndProcessed(all.get(0).value());
-            });
+    verifyPongMessageWasProducced(out);
 
     out.consumeAll();
     KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(SUCCESS_MESSAGE, UTF_8));
 
-    await()
-        .atMost(10, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              final var all = out.consumeAtLeast(1, Duration.ofSeconds(5)).findAll();
-              return !all.isEmpty() && atLeastOneHasShortDuration(all);
-            });
+    verifyPongMessageWasProducedWithLessDuration(out);
 
     assertThat(helper.getMessages()).containsExactly(PING_SUCCESS);
-  }
-
-  private boolean atLeastOneHasShortDuration(List<ConsumerRecord<String, String>> all) {
-    return all.stream().map(s -> getDuration(s.value())).anyMatch(dur -> dur < 30);
   }
 
   @Test
@@ -109,6 +93,13 @@ public class ApplicationTestCase {
     messageRepository.store(PING_SUCCESS);
     KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(ERROR_MESSAGE, UTF_8));
 
+    verifyMessageWasProducedToErrorTopic(errorOut);
+
+    assertThat(helper.getMessages())
+        .containsExactly(PING_SUCCESS, new Message(TRANSACTION_ID, new Payload("ping", true)));
+  }
+
+  private void verifyMessageWasProducedToErrorTopic(KafkaConsumerHelper errorOut) {
     await()
         .atMost(10, TimeUnit.SECONDS)
         .until(
@@ -116,9 +107,29 @@ public class ApplicationTestCase {
               final var all = errorOut.consumeAtLeast(1, Duration.ofSeconds(5)).findAll();
               return all.size() == 1;
             });
+  }
 
-    assertThat(helper.getMessages())
-        .containsExactly(PING_SUCCESS, new Message(TRANSACTION_ID, new Payload("ping", true)));
+  private void verifyPongMessageWasProducedWithLessDuration(KafkaConsumerHelper out) {
+    await()
+        .atMost(10, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              final var all = out.consumeAtLeast(1, Duration.ofSeconds(5)).findAll();
+              return !all.isEmpty() && atLeastOneHasShortDuration(all);
+            });
+  }
+
+  private void verifyPongMessageWasProducced(KafkaConsumerHelper out) {
+    await().atMost(10, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              final var all = out.consumeAtLeast(1, Duration.ofSeconds(5)).findAll();
+              return !all.isEmpty() && successAndProcessed(all.get(0).value());
+            });
+  }
+
+  private boolean atLeastOneHasShortDuration(List<ConsumerRecord<String, String>> all) {
+    return all.stream().map(s -> getDuration(s.value())).anyMatch(dur -> dur < 30);
   }
 
   private boolean successAndProcessed(String value) throws JsonProcessingException {
