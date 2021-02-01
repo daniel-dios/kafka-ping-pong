@@ -3,6 +3,7 @@ package com.kafkapingpong.framework;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kafkapingpong.event.Message;
+import com.kafkapingpong.event.MessageRepository;
 import com.kafkapingpong.event.Payload;
 import com.kafkapingpong.framework.helper.DatabaseHelper;
 import com.kafkapingpong.framework.helper.DockerComposeHelper;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
 import static com.kafkapingpong.framework.helper.FileHelper.resourceToBytes;
+import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_ERROR;
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_TOPIC;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,11 +40,15 @@ public class ApplicationTest {
   private static final String PING_TOPIC = "ping";
   private static final KafkaConsumerHelper KAFKA_CONSUMER_HELPER = new KafkaConsumerHelper();
   private static final byte[] SUCCESS_MESSAGE = resourceToBytes("classpath:/examples/success-message.json");
+  private static final byte[] ERROR_MESSAGE = resourceToBytes("classpath:/examples/error-message.json");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final UUID TRANSACTION_ID = UUID.fromString("9981f951-3ed7-46b7-8a23-86a87d9ffdaa");
 
   @Autowired
   private NamedParameterJdbcTemplate jdbcTemplate;
+
+  @Autowired
+  private MessageRepository messageRepository;
 
   private DatabaseHelper helper;
 
@@ -64,7 +70,7 @@ public class ApplicationTest {
   }
 
   @Test
-  void shouldProduceOutMessageWhenSuccess() throws Exception {
+  void shouldProcessAndProduceForFirstTimeMessages() throws Exception {
     KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(SUCCESS_MESSAGE, UTF_8));
 
     final var out = new KafkaConsumerHelper(List.of(PONG_TOPIC));
@@ -74,13 +80,51 @@ public class ApplicationTest {
         .until(
             () -> {
               final var all = out.consumeAtLeast(1, Duration.ofSeconds(1)).findAll();
-              return all.size() == 1 && isExpectedProcessedMessage(all.get(0).value());
+              return all.size() == 1 && successAndProcessed(all.get(0).value());
             });
 
     assertThat(helper.getMessages()).containsExactly(new Message(TRANSACTION_ID, new Payload("ping", false)));
   }
 
-  private boolean isExpectedProcessedMessage(String value) throws JsonProcessingException {
+  @Test
+  void shouldConsumeSuccessIdempotent() throws Exception {
+    messageRepository.store(new Message(TRANSACTION_ID, new Payload("ping", false)));
+    KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(SUCCESS_MESSAGE, UTF_8));
+
+    final var out = new KafkaConsumerHelper(List.of(PONG_TOPIC));
+
+    await()
+        .atMost(10, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              final var all = out.consumeAtLeast(1, Duration.ofSeconds(1)).findAll();
+              return all.size() == 1 && successAndNotProcessed(all.get(0).value());
+            });
+
+    assertThat(helper.getMessages()).containsExactly(new Message(TRANSACTION_ID, new Payload("ping", false)));
+  }
+
+  @Test
+  void shouldConsumeError() throws Exception {
+    messageRepository.store(new Message(TRANSACTION_ID, new Payload("ping", false)));
+    KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(ERROR_MESSAGE, UTF_8));
+
+    final var errorOut = new KafkaConsumerHelper(List.of(PONG_ERROR));
+
+    await()
+        .atMost(10, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              final var all = errorOut.consumeAtLeast(1, Duration.ofSeconds(1)).findAll();
+              return all.size() == 1;
+            });
+
+    assertThat(helper.getMessages()).containsExactly(
+        new Message(TRANSACTION_ID, new Payload("ping", false)),
+        new Message(TRANSACTION_ID, new Payload("ping", true)));
+  }
+
+  private boolean successAndProcessed(String value) throws JsonProcessingException {
     final var jsonNode = OBJECT_MAPPER.readTree(value);
     final var tId = jsonNode.get("transaction-id").asText();
     final var payload = jsonNode.get("payload");
@@ -89,5 +133,16 @@ public class ApplicationTest {
     return tId.equals(TRANSACTION_ID.toString())
         && "pong".equals(message)
         && duration > Duration.ofSeconds(30).toMillis();
+  }
+
+  private boolean successAndNotProcessed(String value) throws JsonProcessingException {
+    final var jsonNode = OBJECT_MAPPER.readTree(value);
+    final var tId = jsonNode.get("transaction-id").asText();
+    final var payload = jsonNode.get("payload");
+    final var message = payload.get("message").textValue();
+    final var duration = payload.get("processing_time").asLong();
+    return tId.equals(TRANSACTION_ID.toString())
+        && "pong".equals(message)
+        && duration < Duration.ofSeconds(30).toMillis();
   }
 }
