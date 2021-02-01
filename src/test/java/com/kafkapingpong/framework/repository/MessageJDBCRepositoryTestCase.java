@@ -5,9 +5,6 @@ import com.kafkapingpong.event.MessageRepository;
 import com.kafkapingpong.event.Payload;
 import com.kafkapingpong.framework.Application;
 import com.kafkapingpong.framework.helper.DatabaseHelper;
-import com.kafkapingpong.framework.helper.DockerComposeHelper;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +16,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.UUID;
 
-import static com.kafkapingpong.framework.helper.DockerComposeHelper.Compose.BOTH;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext

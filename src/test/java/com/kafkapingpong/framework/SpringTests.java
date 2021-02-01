@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Nested;
 
 public class SpringTests {
 
-  private static final DockerComposeHelper dockerCompose = new DockerComposeHelper(DockerComposeHelper.Compose.BOTH);
+  private static final DockerComposeHelper dockerCompose = new DockerComposeHelper();
 
   @BeforeAll
   static void dockerComposeUp() {

@@ -20,7 +20,7 @@ class KafkaTest {
   @Disabled
   @Test
   void shouldConsumeMessage() throws Exception {
-    final var dockerComposeHelper = new DockerComposeHelper(DockerComposeHelper.Compose.KAFKA);
+    final var dockerComposeHelper = new DockerComposeHelper();
     dockerComposeHelper.start();
     final var kafkaConsumerHelper = new KafkaConsumerHelper();
     kafkaConsumerHelper.consumeAll();

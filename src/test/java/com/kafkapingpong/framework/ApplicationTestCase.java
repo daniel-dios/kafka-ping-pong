@@ -44,7 +44,7 @@ public class ApplicationTestCase {
   private static final UUID TRANSACTION_ID = UUID.fromString("9981f951-3ed7-46b7-8a23-86a87d9ffdaa");
   private static final Message PING_SUCCESS = new Message(TRANSACTION_ID, new Payload("ping", false));
 
-  private static final DockerComposeHelper dockerCompose = new DockerComposeHelper(DockerComposeHelper.Compose.BOTH);
+  private static final DockerComposeHelper dockerCompose = new DockerComposeHelper();
 
   @BeforeAll
   static void dockerComposeUp() {
