@@ -22,7 +22,10 @@ public class DockerComposeHelper extends DockerComposeContainer<DockerComposeHel
   private static final int ZOOKEEPER_PORT = 2181;
 
   public DockerComposeHelper() {
-    super(new File("docker-compose.yml"));
+    super(
+        new File("docker/docker-compose-db.yml"),
+        new File("docker/docker-compose-kafka.yml")
+    );
 
     this
         .withLocalCompose(true)
@@ -53,10 +56,10 @@ public class DockerComposeHelper extends DockerComposeContainer<DockerComposeHel
   }
 
   private void setSystemProperties() {
-    setProperty("db.host", this.getServiceHost(POSTGRES, POSTGRES_PORT));
-    setProperty("db.port", valueOf(this.getServicePort(POSTGRES, POSTGRES_PORT)));
+    setProperty("DB_HOST", this.getServiceHost(POSTGRES, POSTGRES_PORT));
+    setProperty("DB_PORT", valueOf(this.getServicePort(POSTGRES, POSTGRES_PORT)));
 
-    setProperty("kafka.host", this.getServiceHost(KAFKA, KAFKA_PORT));
-    setProperty("kafka.port", valueOf(KAFKA_PORT));
+    setProperty("KAFKA_HOST", this.getServiceHost(KAFKA, KAFKA_PORT));
+    setProperty("KAFKA_PORT", valueOf(KAFKA_PORT));
   }
 }

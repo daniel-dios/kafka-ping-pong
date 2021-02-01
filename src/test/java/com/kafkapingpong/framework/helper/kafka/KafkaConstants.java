@@ -8,7 +8,7 @@ public class KafkaConstants {
   }
 
   public static final String KAFKA_HOST = "localhost";
-  public static final int KAFKA_PORT = 9094;
+  public static final int KAFKA_PORT = 9092;
   public static final String PING_TOPIC = "ping";
   public static final String PONG_TOPIC = "pong";
   public static final String PONG_ERROR = "pong-error";
