@@ -6,6 +6,8 @@ import com.kafkapingpong.framework.repository.dto.MessageOut;
 import com.kafkapingpong.framework.repository.dto.PayloadError;
 import com.kafkapingpong.framework.repository.dto.PayloadSuccess;
 import com.kafkapingpong.framework.repository.exception.MessageNotSendException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 
@@ -14,6 +16,8 @@ import java.util.UUID;
 
 public class PongProducerRepository implements PongRepository {
   public static final String PARTITION_KEY = "partitionKey";
+
+  private final Logger logger = LoggerFactory.getLogger(PongProducerRepository.class);
 
   private final Duration timeout;
   private final MessageChannel pongSuccessChannel;
@@ -53,8 +57,11 @@ public class PongProducerRepository implements PongRepository {
         .build();
 
     if (!messageChannel.send(outMessage, timeout.toMillis())) {
+      logger.info("{} error when sending to {}", message.getTransactionId(), messageChannel);
       throw new MessageNotSendException();
     }
+
+    logger.info("{} was successfully sent to {}", message.getTransactionId(), messageChannel);
   }
 
   private MessageOut mapToPongSuccess(Message message, Duration duration) {

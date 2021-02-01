@@ -3,6 +3,8 @@ package com.kafkapingpong.framework.repository;
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.MessageRepository;
 import com.kafkapingpong.event.Payload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class MessageJDBCRepository implements MessageRepository {
+  private final Logger logger = LoggerFactory.getLogger(MessageJDBCRepository.class);
 
   private static final String SELECT_TRANSACTION_ID_MESSAGE_ERROR_FROM_MESSAGES_WHERE_TRANSACTION_ID_TRANSACTION_ID =
       """
@@ -55,7 +58,13 @@ public class MessageJDBCRepository implements MessageRepository {
     paramSource.addValue("message", message.getMessage());
     paramSource.addValue("error", message.isError());
 
-    jdbcTemplate
+    final var update = jdbcTemplate
         .update(INSERT_INTO_MESSAGES_TRANSACTION_ID_MESSAGE_ERROR_VALUES_TRANSACTION_ID_MESSAGE_ERROR, paramSource);
+
+    if (update > 0) {
+      logger.info("{} saved as {} ", message.getTransactionId(), message.isError() ? "error" : "success");
+    } else {
+      logger.error("{} was not saved", message.getTransactionId());
+    }
   }
 }

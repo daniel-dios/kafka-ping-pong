@@ -3,6 +3,8 @@ package com.kafkapingpong.service;
 import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.MessageRepository;
 import com.kafkapingpong.event.PongRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -10,6 +12,8 @@ import static java.lang.System.currentTimeMillis;
 import static java.time.Duration.ofMillis;
 
 public class Processor {
+
+  private final Logger logger = LoggerFactory.getLogger(Processor.class);
 
   private final MessageRepository messageRepository;
   private final ImageProcessor imageProcessor;
@@ -34,21 +38,25 @@ public class Processor {
     if (message.isError() && !exhaustedAttempts(messages)) {
       messageRepository.store(message);
       pongRepository.pongForError(message);
+      logger.info("{} processed as error", message.getTransactionId());
       return;
     }
 
     if (message.isError() && exhaustedAttempts(messages)) {
       messageRepository.store(message);
       pongRepository.dlq(message);
+      logger.info("{} processed as dlq-ed", message.getTransactionId());
       return;
     }
 
     if (!lastMessageWasSuccess(messages)) {
       beginning -= imageProcessor.compute(message.getTransactionId()).toMillis();
       messageRepository.store(message);
+      logger.info("{} processed as success for first time", message.getTransactionId());
     }
 
     pongRepository.pong(message, ofMillis(currentTimeMillis() - beginning));
+    logger.info("{} processed as success", message.getTransactionId());
   }
 
   private boolean exhaustedAttempts(List<Message> compact) {

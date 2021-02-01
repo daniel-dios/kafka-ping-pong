@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Duration;
@@ -32,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
-@DirtiesContext
 public class PongPublisherRepositoryTest {
 
   private static final DockerComposeHelper DOCKER_COMPOSE_HELPER = new DockerComposeHelper(BOTH);
@@ -71,7 +69,7 @@ public class PongPublisherRepositoryTest {
   void shouldProduceSuccessEventToPong() throws JsonProcessingException {
     pongRepository.pong(message, DURATION);
 
-    final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
+    final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(1, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo(PONG_TOPIC);
     assertThat(all.get(0).value()).isEqualTo(new ObjectMapper().writeValueAsString(EXPECTED_PONG_SUCCESS));
@@ -81,7 +79,7 @@ public class PongPublisherRepositoryTest {
   void shouldProduceErrorEventToPongError() throws JsonProcessingException {
     pongRepository.pongForError(errorMessage);
 
-    final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
+    final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(1, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo(PONG_ERROR);
     assertThat(all.get(0).value()).isEqualTo(new ObjectMapper().writeValueAsString(EXPECTED_PONG_ERROR));
@@ -91,7 +89,7 @@ public class PongPublisherRepositoryTest {
   void shouldProduceErrorEventToDlq() throws JsonProcessingException {
     pongRepository.dlq(errorMessage);
 
-    final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(10, Duration.ofSeconds(2)).findAll();
+    final var all = KAFKA_CONSUMER_HELPER.consumeAtLeast(1, Duration.ofSeconds(2)).findAll();
     assertThat(all).hasSize(1);
     assertThat(all.get(0).topic()).isEqualTo(DLQ);
     assertThat(all.get(0).value()).isEqualTo(new ObjectMapper().writeValueAsString(EXPECTED_PONG_ERROR));

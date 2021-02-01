@@ -30,6 +30,11 @@ public class KafkaConsumerHelper {
     consumer.subscribe(TOPICS);
   }
 
+  public KafkaConsumerHelper(List<String> topics) {
+    consumer = new KafkaConsumer<>(consumerConfig());
+    consumer.subscribe(topics);
+  }
+
   public void consumeAll() {
     consumeAtLeast(1, ofSeconds(1));
   }
