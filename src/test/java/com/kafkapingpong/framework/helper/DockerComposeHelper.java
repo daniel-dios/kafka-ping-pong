@@ -40,7 +40,7 @@ public class DockerComposeHelper extends DockerComposeContainer<DockerComposeHel
             KAFKA,
             new WaitAllStrategy(WITH_INDIVIDUAL_TIMEOUTS_ONLY)
                 .withStrategy(forListeningPort())
-                .withStrategy(forLogMessage(".*creating topics.*", 1)))
+                .withStrategy(forLogMessage(".*Created topic*", 3)))
         .withExposedService(ZOOKEEPER, ZOOKEEPER_PORT)
         .waitingFor(
             ZOOKEEPER,

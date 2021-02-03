@@ -17,8 +17,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS;
 
-@DirtiesContext
+@DirtiesContext(classMode = AFTER_CLASS)
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
 public abstract class MessageJDBCRepositoryTestCase {

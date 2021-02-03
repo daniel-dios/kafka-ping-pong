@@ -8,8 +8,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS;
 
-@DirtiesContext
+@DirtiesContext(classMode = AFTER_CLASS)
 class KafkaTest {
 
   private static final String MESSAGE_CONTENT = """

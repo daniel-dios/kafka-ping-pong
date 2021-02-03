@@ -6,13 +6,10 @@ import com.kafkapingpong.event.Message;
 import com.kafkapingpong.event.Payload;
 import com.kafkapingpong.event.PongRepository;
 import com.kafkapingpong.framework.Application;
-import com.kafkapingpong.framework.helper.DockerComposeHelper;
 import com.kafkapingpong.framework.helper.kafka.KafkaConsumerHelper;
 import com.kafkapingpong.framework.repository.dto.MessageOut;
 import com.kafkapingpong.framework.repository.dto.PayloadError;
 import com.kafkapingpong.framework.repository.dto.PayloadSuccess;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,8 +25,9 @@ import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.DLQ;
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_ERROR;
 import static com.kafkapingpong.framework.helper.kafka.KafkaConstants.PONG_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS;
 
-@DirtiesContext
+@DirtiesContext(classMode = AFTER_CLASS)
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
 public abstract class PongPublisherRepositoryTestCase {
