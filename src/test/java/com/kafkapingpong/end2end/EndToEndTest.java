@@ -11,8 +11,6 @@ import com.kafkapingpong.framework.helper.kafka.KafkaProducerHelper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.time.Duration;
@@ -37,7 +35,7 @@ public class EndToEndTest {
   private static final Message PING_SUCCESS = new Message(TRANSACTION_ID, new Payload("ping", false));
   private final DatabaseHelper helper = getDatabaseHelper();
 
-  @BeforeEach
+  //@BeforeEach
   void beforeAll() {
     helper.clean();
   }
@@ -51,7 +49,7 @@ public class EndToEndTest {
     return new DatabaseHelper(new NamedParameterJdbcTemplate(new HikariDataSource(config)));
   }
 
-  @Test
+  //@Test
   void shouldBeIdempotent() throws Exception {
     final var out = new KafkaConsumerHelper(List.of(PONG_TOPIC));
     out.consumeAll();
@@ -67,7 +65,7 @@ public class EndToEndTest {
     assertThat(helper.getMessages()).containsExactly(PING_SUCCESS);
   }
 
-  @Test
+  //@Test
   void shouldConsumeError() throws Exception {
     final var errorOut = new KafkaConsumerHelper(List.of(PONG_ERROR));
     errorOut.consumeAll();

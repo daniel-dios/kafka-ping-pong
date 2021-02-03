@@ -8,18 +8,22 @@ import org.springframework.messaging.SubscribableChannel;
 public interface PongChannels {
 
   String PING_INPUT = "ping";
+
   @Input(PING_INPUT)
   SubscribableChannel getInput();
 
   String PONG_OUTPUT = "pong";
+
   @Output(PONG_OUTPUT)
   MessageChannel getPongChannel();
 
   String PONG_ERROR_OUTPUT = "pong-error";
+
   @Output(PONG_ERROR_OUTPUT)
   MessageChannel getPongErrorChannel();
 
   String DLQ_OUTPUT = "dlq";
+
   @Output(DLQ_OUTPUT)
   MessageChannel getDlqChannel();
 }
