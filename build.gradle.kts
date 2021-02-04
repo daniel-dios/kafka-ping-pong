@@ -32,7 +32,7 @@ dependencies {
     // tests
     testImplementation("org.testcontainers:testcontainers:1.15.1")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.cloud:spring-cloud-stream-binder-test:3.1.0")
+    testImplementation("org.springframework.cloud:spring-cloud-stream-binder-test:3.1.1")
     testImplementation("org.awaitility:awaitility:3.0.0")
 }
 
