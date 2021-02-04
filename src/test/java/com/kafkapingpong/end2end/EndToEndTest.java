@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,7 @@ public class EndToEndTest {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final UUID TRANSACTION_ID = UUID.fromString("9981f951-3ed7-46b7-8a23-86a87d9ffdaa");
   private static final Message PING_SUCCESS = new Message(TRANSACTION_ID, new Payload("ping", false));
+  private static final int MAXIMUM_CONSECUTIVE_ATTEMPTS = 10;
   private final DatabaseHelper helper = getDatabaseHelper();
 
   private static final DockerComposeHelper dockerCompose = new DockerComposeHelper();
@@ -85,9 +87,9 @@ public class EndToEndTest {
   @Test
   void shouldConsumeError() throws Exception {
     final var KAFKA_PRODUCER_HELPER = new KafkaProducerHelper();
-
     final var errorOut = new KafkaConsumerHelper(List.of(PONG_ERROR));
     errorOut.consumeAll();
+
     KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(ERROR_MESSAGE, UTF_8));
 
     verifyMessageWasProducedToErrorTopic(errorOut);
@@ -96,7 +98,39 @@ public class EndToEndTest {
         .containsExactly(new Message(TRANSACTION_ID, new Payload("ping", true)));
   }
 
+  @Test
+  void shouldProduceToDlqAfterMaximumConfigured() throws Exception {
+    final var KAFKA_PRODUCER_HELPER = new KafkaProducerHelper();
+    final var errorOut = new KafkaConsumerHelper(List.of(PONG_ERROR));
+    errorOut.consumeAll();
+
+    final var messagesSent = sendElevenErrorMessages(KAFKA_PRODUCER_HELPER);
+
+    verifyMessageWasProducedToDlq(new KafkaConsumerHelper(List.of("dlq")));
+
+    assertThat(helper.getMessages()).containsExactlyElementsOf(messagesSent);
+  }
+
+  private List<Message> sendElevenErrorMessages(KafkaProducerHelper KAFKA_PRODUCER_HELPER) throws Exception {
+    final var list = new ArrayList<Message>();
+    for (int i = 0; i <= MAXIMUM_CONSECUTIVE_ATTEMPTS; i++) {
+      KAFKA_PRODUCER_HELPER.send(PING_TOPIC, new String(ERROR_MESSAGE, UTF_8));
+      list.add(new Message(TRANSACTION_ID, new Payload("ping", true)));
+    }
+    return list;
+  }
+
   private void verifyMessageWasProducedToErrorTopic(KafkaConsumerHelper errorOut) {
+    await()
+        .atMost(10, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              final var all = errorOut.consumeAtLeast(1, Duration.ofSeconds(5)).findAll();
+              return all.size() == 1;
+            });
+  }
+
+  private void verifyMessageWasProducedToDlq(KafkaConsumerHelper errorOut) {
     await()
         .atMost(10, TimeUnit.SECONDS)
         .until(
