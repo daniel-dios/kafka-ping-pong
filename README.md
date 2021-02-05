@@ -2,7 +2,7 @@
 ## 🤓 Explanation:
 
 This is a simple consumer-producer of Kafka messages. Using spring cloud streams, spring data as infra.
-All the logic about business, idempotency, where to store (send) messages, to drop or call different services (image processor) is implemented in a single-use case based on hexagonal architecture implemented with Java15 and unitary tested. Easy to test and to evolve.
+All the logic about business, idempotency, where to store (send) messages, to drop or call different services (image processor) is implemented in a single-use case based on hexagonal architecture (term that I'd like to introduce on the team 😛) implemented with Java15 (last stable version) and unitary tested. Easy to test and to evolve.
 
 ## 🧪 Tests
 
@@ -12,11 +12,16 @@ All the code was developed with the TDD approach, you will see here unitary test
 Why not everything in infra? 
 
 - I was considering at the beginning using KSQL and resolve everything in infra code but you may change your consumer for a rest controller tomorrow or just a command in your terminal and you will keep this logic into a simple use case as a piece of your business. 
-- Also I followed the dependency injection, so now, we will be able to substitute the image processor or the repositories with another implementation and the code will be the same.
+
+- Also, following the dependency inversion, code is able to substitute modules implemented ie. the image processor or the repositories for another different implementation and the code will be the same.
 
 Is it weird to persist twice the messages?
 
-- Maybe, but it is the only way to keep messages and handle idempotency logic (that could change on feature) force to you to have in a repo at least all the error messages and the last success. (If you don't understand this, check the description) So, if code persists in memory and the producer fails, everything works as a transaction and DB changes won't be committed. Also, the consumption of the message won't is committed too.
+- Maybe, but i'is the only way to keep messages and handle idempotency logic (that could change on feature), they force to you to have in a repo at least all the error messages and the last success sent. Everything will happen transactionally, so when a persists happen and the producer fails, DB changes won't be committed and they will be rolled back. Also, the message consumption won't be committed too. (If you don't understand this, check the description logic).
+
+- Using a simple postgres instance to store messages we'll be able to scale horizontally the service, adding more instances and idempotency will be preserved*. Also its easy to get in memory a list of the N messages (N == maximum of errors) ordered by LIFO (easy sql query).
+
+* ping sender should produce messages using the transaction id as key, in order to preserve the order.
 
 Where are the configurations?
 
