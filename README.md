@@ -7,9 +7,10 @@ All the logic about business, idempotency, where to store (send) messages, to dr
 ## 🧪 Tests
 
 All the code was developed with the TDD approach, you will see here unitary tests, module/integration tests, and a real end to end with everything dockerized and only using Kafka to check outputs in different scenarios.
+Also, I've added GitHub actions in order to have a CI pipeline were run automatically all the tests with every commit. 
 
 ## 🤔 Doubts?
-Why not everything in infra? 
+Why not everything as infra? 
 
 - I was considering at the beginning using KSQL and resolve everything in infra code but you may change your consumer for a rest controller tomorrow or just a command in your terminal and you will keep this logic into a simple use case as a piece of your business. 
 
@@ -17,7 +18,7 @@ Why not everything in infra?
 
 Is it weird to persist twice the messages?
 
-- Maybe, but i'is the only way to keep messages and handle idempotency logic (that could change on feature), they force to you to have in a repo at least all the error messages and the last success sent. Everything will happen transactionally, so when a persists happen and the producer fails, DB changes won't be committed and they will be rolled back. Also, the message consumption won't be committed too. (If you don't understand this, check the description logic).
+- Maybe, but it's the only way to keep messages and handle idempotency logic (that could change on feature), they force to you to have in a repo at least all the error messages and the last success sent. Everything will happen transactional, so when a persists happen, and the producer fails, DB changes won't be committed, and they will be rolled back. Also, the message consumption won't be committed too. (If you don't understand this, check the description logic).
 
 - Using a simple postgres instance to store messages we'll be able to scale horizontally the service, adding more instances and idempotency will be preserved*. Also its easy to get in memory a list of the N messages (N == maximum of errors) ordered by LIFO (easy sql query).
 
@@ -25,7 +26,7 @@ Is it weird to persist twice the messages?
 
 Where are the configurations?
 
-- You will see Kafka host and port on the application.yml and the number of consecutive errors on the Config.class (we can refactor in a .yml too but I have my doubt if you won't need a new deploy to change it).
+- You will see Kafka and DB host and port on the application.yml (they are var envs) and, for the number of consecutive errors on the Config.class (we can extract it to the .yml too, but I have doubts if you won't need a new deployment to change it).
 
 ## 🏃 Instructions to run:
 

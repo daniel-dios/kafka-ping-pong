@@ -1,13 +1,13 @@
-package com.kafkapingpong.end2end;
+package com.kafkapingpong.infrastructure.helper;
 
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 
 import java.io.File;
-import java.time.Duration;
 
 import static com.kafkapingpong.infrastructure.helper.kafka.KafkaConstants.KAFKA_PORT;
 import static java.lang.String.valueOf;
+import static java.lang.System.setProperty;
 import static org.testcontainers.containers.wait.strategy.Wait.forListeningPort;
 import static org.testcontainers.containers.wait.strategy.Wait.forLogMessage;
 import static org.testcontainers.containers.wait.strategy.WaitAllStrategy.Mode.WITH_INDIVIDUAL_TIMEOUTS_ONLY;
@@ -23,7 +23,8 @@ public class DockerComposeHelper extends DockerComposeContainer<DockerComposeHel
 
   public DockerComposeHelper() {
     super(
-        new File("./docker-compose.yml")
+        new File("docker/docker-compose-db.yml"),
+        new File("docker/docker-compose-kafka.yml")
     );
 
     this
@@ -43,10 +44,20 @@ public class DockerComposeHelper extends DockerComposeContainer<DockerComposeHel
         .waitingFor(ZOOKEEPER, new WaitAllStrategy(WITH_INDIVIDUAL_TIMEOUTS_ONLY)
             .withStrategy(forListeningPort())
             .withStrategy(forLogMessage(".*binding to port.*", 1))
-        )
-        .waitingFor("pingpong", new WaitAllStrategy()
-            .withStrategy(forLogMessage(".+Started Application in .+ seconds.+", 1))
-            .withStartupTimeout(Duration.ofMinutes(3))
         );
+  }
+
+  @Override
+  public void start() {
+    super.start();
+    setSystemProperties();
+  }
+
+  private void setSystemProperties() {
+    setProperty("DB_HOST", this.getServiceHost(POSTGRES, POSTGRES_PORT));
+    setProperty("DB_PORT", valueOf(this.getServicePort(POSTGRES, POSTGRES_PORT)));
+
+    setProperty("KAFKA_HOST", this.getServiceHost(KAFKA, KAFKA_PORT));
+    setProperty("KAFKA_PORT", valueOf(KAFKA_PORT));
   }
 }
