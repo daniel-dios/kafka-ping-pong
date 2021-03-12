@@ -6,7 +6,7 @@ import reactor.core.publisher.Sinks;
 
 import java.util.function.Supplier;
 
-public abstract class FunctionalMessageOutProducer implements Supplier<Flux<MessageOut>> {
+public class MessageOutProducer implements Supplier<Flux<MessageOut>> {
   private final Sinks.Many<MessageOut> sink = Sinks.many().unicast().onBackpressureBuffer();
 
   public void send(MessageOut out) {

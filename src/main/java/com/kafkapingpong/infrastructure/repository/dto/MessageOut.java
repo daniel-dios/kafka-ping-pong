@@ -14,10 +14,6 @@ public class MessageOut {
     this.payload = payload;
   }
 
-  public String getTransactionId() {
-    return transactionId;
-  }
-
   public PayloadOut getPayload() {
     return payload;
   }
