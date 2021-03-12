@@ -2,7 +2,6 @@ package com.kafkapingpong.infrastructure.configuration;
 
 import com.kafkapingpong.domain.message.MessageRepository;
 import com.kafkapingpong.domain.message.PongRepository;
-import com.kafkapingpong.infrastructure.consumer.MessageConsumer;
 import com.kafkapingpong.infrastructure.repository.MessageJDBCRepository;
 import com.kafkapingpong.usecase.ImageProcessor;
 import com.kafkapingpong.usecase.ImageProcessorFake;
@@ -12,13 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
-public class Config {
-
-  @Bean
-  public MessageConsumer messageConsumer(
-      Processor processor) {
-    return new MessageConsumer(processor);
-  }
+public class ApplicationConfiguration {
 
   @Bean
   public Processor processor(
@@ -34,8 +27,7 @@ public class Config {
   }
 
   @Bean
-  public MessageRepository messageRepository(
-      NamedParameterJdbcTemplate jdbcTemplate) {
+  public MessageRepository messageRepository(NamedParameterJdbcTemplate jdbcTemplate) {
     return new MessageJDBCRepository(jdbcTemplate);
   }
 }

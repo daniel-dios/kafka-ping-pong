@@ -1,6 +1,6 @@
 package com.kafkapingpong.infrastructure;
 
-import com.kafkapingpong.infrastructure.consumer.MessageConsumerIntegrationTestCase;
+import com.kafkapingpong.infrastructure.consumer.MessageInConsumerIntegrationTestCase;
 import com.kafkapingpong.infrastructure.helper.DockerComposeHelper;
 import com.kafkapingpong.infrastructure.repository.MessageJDBCRepositoryTestCase;
 import com.kafkapingpong.infrastructure.repository.PongPublisherRepositoryTestCase;
@@ -31,7 +31,7 @@ public class IntegrationTests {
   }
 
   @Nested
-  class MessageConsumerIntegrationTest extends MessageConsumerIntegrationTestCase {
+  class MessageInConsumerIntegrationTest extends MessageInConsumerIntegrationTestCase {
   }
 
 }

@@ -10,27 +10,20 @@ spring:
         binder:
           brokers: ${KAFKA_HOST}:${KAFKA_PORT}
       bindings:
-        messageConsumer-input:
+        messageConsumer-in-0:
           consumer:
             partitioned: true
             maxAttempts: 1
           group: kafkapingpong
           destination: "ping"
-        pong-output:
-          producer:
-            partitionKeyExpression: headers['partitionKey']
+        pongSuccessProducer-out-0:
           destination: "pong"
-          content-type: application/json
-        pong-error-output:
-          producer:
-            partitionKeyExpression: headers['partitionKey']
+        pongErrorProducer-out-0:
           destination: "pong-error"
-          content-type: application/json
-        dlq-output:
-          producer:
-            partitionKeyExpression: headers['partitionKey']
+        dlqProducer-out-0:
           destination: "dlq"
-          content-type: application/json
+      function:
+        definition: messageConsumer;pongSuccessProducer;pongErrorProducer;dlqProducer
 
 server:
   port: 8000

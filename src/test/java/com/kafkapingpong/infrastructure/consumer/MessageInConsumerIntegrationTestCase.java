@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
-public abstract class MessageConsumerIntegrationTestCase {
+public abstract class MessageInConsumerIntegrationTestCase {
 
   private static final KafkaProducerHelper KAFKA_PRODUCER_HELPER = new KafkaProducerHelper();
   private static final String TOPIC = "ping";

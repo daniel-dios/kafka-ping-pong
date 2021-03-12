@@ -1,10 +1,12 @@
 package com.kafkapingpong.infrastructure.configuration;
 
 import com.kafkapingpong.domain.message.PongRepository;
+import com.kafkapingpong.infrastructure.consumer.MessageInConsumer;
+import com.kafkapingpong.infrastructure.producer.MessageOutProducer;
 import com.kafkapingpong.infrastructure.repository.PongProducerRepository;
 import com.kafkapingpong.infrastructure.repository.exception.DbException;
 import com.kafkapingpong.infrastructure.repository.exception.MessageNotSendException;
-import org.springframework.cloud.stream.annotation.EnableBinding;
+import com.kafkapingpong.usecase.Processor;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,12 +15,42 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
 import org.springframework.util.backoff.ExponentialBackOff;
 
-import java.time.Duration;
 import java.util.Map;
 
 @Configuration
-@EnableBinding({PongChannels.class})
-public class SpringKafkaConfiguration {
+public class CloudStreamConfiguration {
+
+  @Bean
+  public MessageOutProducer pongSuccessProducer() {
+    return new MessageOutProducer();
+  }
+
+  @Bean
+  public MessageOutProducer pongErrorProducer() {
+    return new MessageOutProducer();
+  }
+
+  @Bean
+  public MessageOutProducer dlqProducer() {
+    return new MessageOutProducer();
+  }
+
+  @Bean
+  public PongRepository pongRepository(
+      MessageOutProducer pongSuccessProducer,
+      MessageOutProducer pongErrorProducer,
+      MessageOutProducer dlqProducer
+  ) {
+    return new PongProducerRepository(
+        pongSuccessProducer,
+        pongErrorProducer,
+        dlqProducer);
+  }
+
+  @Bean
+  public MessageInConsumer messageConsumer(Processor processor) {
+    return new MessageInConsumer(processor);
+  }
 
   @Bean
   public ListenerContainerCustomizer<AbstractMessageListenerContainer> containerCustomizer() {
@@ -33,14 +65,5 @@ public class SpringKafkaConfiguration {
       final var props = container.getContainerProperties();
       props.setAckMode(ContainerProperties.AckMode.RECORD);
     };
-  }
-
-  @Bean
-  public PongRepository pongRepository(PongChannels channels) {
-    return new PongProducerRepository(
-        Duration.ofSeconds(5),
-        channels.getPongChannel(),
-        channels.getPongErrorChannel(),
-        channels.getDlqChannel());
   }
 }
