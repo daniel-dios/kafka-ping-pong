@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
-public class Config {
+public class ApplicationConfiguration {
 
   @Bean
   public Processor processor(
@@ -27,8 +27,7 @@ public class Config {
   }
 
   @Bean
-  public MessageRepository messageRepository(
-      NamedParameterJdbcTemplate jdbcTemplate) {
+  public MessageRepository messageRepository(NamedParameterJdbcTemplate jdbcTemplate) {
     return new MessageJDBCRepository(jdbcTemplate);
   }
 }

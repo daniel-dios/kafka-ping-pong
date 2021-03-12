@@ -1,7 +1,7 @@
 package com.kafkapingpong.infrastructure.configuration;
 
 import com.kafkapingpong.domain.message.PongRepository;
-import com.kafkapingpong.infrastructure.consumer.MessageConsumer;
+import com.kafkapingpong.infrastructure.consumer.MessageInConsumer;
 import com.kafkapingpong.infrastructure.producer.MessageOutProducer;
 import com.kafkapingpong.infrastructure.repository.PongProducerRepository;
 import com.kafkapingpong.infrastructure.repository.exception.DbException;
@@ -18,22 +18,7 @@ import org.springframework.util.backoff.ExponentialBackOff;
 import java.util.Map;
 
 @Configuration
-public class SpringKafkaConfiguration {
-
-  @Bean
-  public ListenerContainerCustomizer<AbstractMessageListenerContainer> containerCustomizer() {
-    return (container, dest, group) -> {
-      final var errorHandler = new SeekToCurrentErrorHandler(null, new ExponentialBackOff(50, 5));
-      final Map<Class<? extends Throwable>, Boolean> repeatableExceptions = Map.of(
-          DbException.class, true,
-          MessageNotSendException.class, true);
-      errorHandler.setClassifications(repeatableExceptions, false);
-      container.setErrorHandler(errorHandler);
-
-      final var props = container.getContainerProperties();
-      props.setAckMode(ContainerProperties.AckMode.RECORD);
-    };
-  }
+public class CloudStreamConfiguration {
 
   @Bean
   public MessageOutProducer pongSuccessProducer() {
@@ -63,8 +48,22 @@ public class SpringKafkaConfiguration {
   }
 
   @Bean
-  public MessageConsumer messageConsumer(
-      Processor processor) {
-    return new MessageConsumer(processor);
+  public MessageInConsumer messageConsumer(Processor processor) {
+    return new MessageInConsumer(processor);
+  }
+
+  @Bean
+  public ListenerContainerCustomizer<AbstractMessageListenerContainer> containerCustomizer() {
+    return (container, dest, group) -> {
+      final var errorHandler = new SeekToCurrentErrorHandler(null, new ExponentialBackOff(50, 5));
+      final Map<Class<? extends Throwable>, Boolean> repeatableExceptions = Map.of(
+          DbException.class, true,
+          MessageNotSendException.class, true);
+      errorHandler.setClassifications(repeatableExceptions, false);
+      container.setErrorHandler(errorHandler);
+
+      final var props = container.getContainerProperties();
+      props.setAckMode(ContainerProperties.AckMode.RECORD);
+    };
   }
 }

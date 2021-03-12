@@ -9,11 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
 
-public class MessageConsumer implements Consumer<MessageIn> {
-  private final Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
+public class MessageInConsumer implements Consumer<MessageIn> {
+  private final Logger logger = LoggerFactory.getLogger(MessageInConsumer.class);
   private final Processor processor;
 
-  public MessageConsumer(Processor processor) {
+  public MessageInConsumer(Processor processor) {
     this.processor = processor;
   }
 
