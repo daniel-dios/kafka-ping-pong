@@ -22,7 +22,7 @@ public class MessageConsumerTest {
     final var processor = Mockito.mock(Processor.class);
     final var messageConsumer = new MessageConsumer(processor);
 
-    messageConsumer.consume(success);
+    messageConsumer.accept(success);
 
     Mockito.verify(processor).process(new Message(transactionId, new Payload("ping", false)));
   }

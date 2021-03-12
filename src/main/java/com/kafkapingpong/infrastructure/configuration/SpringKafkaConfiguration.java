@@ -1,10 +1,14 @@
 package com.kafkapingpong.infrastructure.configuration;
 
 import com.kafkapingpong.domain.message.PongRepository;
+import com.kafkapingpong.infrastructure.consumer.MessageConsumer;
+import com.kafkapingpong.infrastructure.producer.DLQProducer;
+import com.kafkapingpong.infrastructure.producer.PongErrorProducer;
+import com.kafkapingpong.infrastructure.producer.PongSuccessProducer;
 import com.kafkapingpong.infrastructure.repository.PongProducerRepository;
 import com.kafkapingpong.infrastructure.repository.exception.DbException;
 import com.kafkapingpong.infrastructure.repository.exception.MessageNotSendException;
-import org.springframework.cloud.stream.annotation.EnableBinding;
+import com.kafkapingpong.usecase.Processor;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +17,9 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
 import org.springframework.util.backoff.ExponentialBackOff;
 
-import java.time.Duration;
 import java.util.Map;
 
 @Configuration
-@EnableBinding({PongChannels.class})
 public class SpringKafkaConfiguration {
 
   @Bean
@@ -36,11 +38,35 @@ public class SpringKafkaConfiguration {
   }
 
   @Bean
-  public PongRepository pongRepository(PongChannels channels) {
+  public PongSuccessProducer pongSuccessProducer() {
+    return new PongSuccessProducer();
+  }
+
+  @Bean
+  public PongErrorProducer pongErrorProducer() {
+    return new PongErrorProducer();
+  }
+
+  @Bean
+  public DLQProducer dlqProducer() {
+    return new DLQProducer();
+  }
+
+  @Bean
+  public PongRepository pongRepository(
+      PongSuccessProducer pongSuccessProducer,
+      PongErrorProducer pongErrorProducer,
+      DLQProducer dlqProducer
+  ) {
     return new PongProducerRepository(
-        Duration.ofSeconds(5),
-        channels.getPongChannel(),
-        channels.getPongErrorChannel(),
-        channels.getDlqChannel());
+        pongSuccessProducer,
+        pongErrorProducer,
+        dlqProducer);
+  }
+
+  @Bean
+  public MessageConsumer messageConsumer(
+      Processor processor) {
+    return new MessageConsumer(processor);
   }
 }
