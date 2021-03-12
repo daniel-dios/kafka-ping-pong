@@ -2,9 +2,8 @@ package com.kafkapingpong.infrastructure.configuration;
 
 import com.kafkapingpong.domain.message.PongRepository;
 import com.kafkapingpong.infrastructure.consumer.MessageConsumer;
-import com.kafkapingpong.infrastructure.producer.DLQProducer;
-import com.kafkapingpong.infrastructure.producer.PongErrorProducer;
-import com.kafkapingpong.infrastructure.producer.PongSuccessProducer;
+import com.kafkapingpong.infrastructure.producer.ErrorProducer;
+import com.kafkapingpong.infrastructure.producer.SuccessProducer;
 import com.kafkapingpong.infrastructure.repository.PongProducerRepository;
 import com.kafkapingpong.infrastructure.repository.exception.DbException;
 import com.kafkapingpong.infrastructure.repository.exception.MessageNotSendException;
@@ -38,25 +37,25 @@ public class SpringKafkaConfiguration {
   }
 
   @Bean
-  public PongSuccessProducer pongSuccessProducer() {
-    return new PongSuccessProducer();
+  public SuccessProducer pongSuccessProducer() {
+    return new SuccessProducer();
   }
 
   @Bean
-  public PongErrorProducer pongErrorProducer() {
-    return new PongErrorProducer();
+  public ErrorProducer pongErrorProducer() {
+    return new ErrorProducer();
   }
 
   @Bean
-  public DLQProducer dlqProducer() {
-    return new DLQProducer();
+  public ErrorProducer dlqProducer() {
+    return new ErrorProducer();
   }
 
   @Bean
   public PongRepository pongRepository(
-      PongSuccessProducer pongSuccessProducer,
-      PongErrorProducer pongErrorProducer,
-      DLQProducer dlqProducer
+      SuccessProducer pongSuccessProducer,
+      ErrorProducer pongErrorProducer,
+      ErrorProducer dlqProducer
   ) {
     return new PongProducerRepository(
         pongSuccessProducer,
