@@ -9,7 +9,7 @@ plugins {
 
 dependencyManagement{
     imports{
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2020.0.2")
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2020.0.3")
     }
 }
 
@@ -30,7 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
 
     // tests
-    testImplementation("org.testcontainers:testcontainers:1.15.2")
+    testImplementation("org.testcontainers:testcontainers:1.15.3")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.cloud:spring-cloud-stream-binder-test:3.1.2")
     testImplementation("org.awaitility:awaitility:4.0.3")
