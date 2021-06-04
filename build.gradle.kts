@@ -16,7 +16,7 @@ dependencyManagement{
 dependencies {
     // db
     implementation("org.postgresql:postgresql:42.2.19")
-    implementation("org.flywaydb:flyway-core:7.7.2")
+    implementation("org.flywaydb:flyway-core:7.9.2")
     implementation("org.springframework:spring-jdbc:5.3.5")
 
     // cloud
@@ -33,7 +33,7 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:1.15.3")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.cloud:spring-cloud-stream-binder-test:3.1.2")
-    testImplementation("org.awaitility:awaitility:4.0.3")
+    testImplementation("org.awaitility:awaitility:4.1.0")
 }
 
 group "com.kafka-ping-pong"
