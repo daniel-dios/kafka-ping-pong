@@ -30,7 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
 
     // tests
-    testImplementation("org.testcontainers:testcontainers:1.15.3")
+    testImplementation("org.testcontainers:testcontainers:1.16.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.cloud:spring-cloud-stream-binder-test:3.1.3")
     testImplementation("org.awaitility:awaitility:4.1.0")
