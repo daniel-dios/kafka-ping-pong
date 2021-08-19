@@ -2,7 +2,7 @@ import org.gradle.api.JavaVersion.VERSION_15
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 
 plugins {
-    id("org.springframework.boot") version "2.4.4"
+    id("org.springframework.boot") version "2.5.4"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     java
 }
