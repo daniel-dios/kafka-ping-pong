@@ -16,7 +16,7 @@ dependencyManagement{
 dependencies {
     // db
     implementation("org.postgresql:postgresql:42.2.22")
-    implementation("org.flywaydb:flyway-core:7.10.0")
+    implementation("org.flywaydb:flyway-core:8.0.4")
     implementation("org.springframework:spring-jdbc:5.3.13")
 
     // cloud
