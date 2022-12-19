@@ -9,7 +9,7 @@ plugins {
 
 dependencyManagement{
     imports{
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2020.0.4")
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2022.0.0")
     }
 }
 
